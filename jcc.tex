@@ -1,0 +1,47 @@
+\chapter{jcc}
+jcc (Janus Circuit Compiler) is a compiler implemented for a modified version of the Janus programing language\cite{YG:2007}.
+It's code is available at \url{https://github.com/aparent/jcc}.
+
+The compiler targets quantum circuits.
+\section{Implementation}
+\subsection{Gate Set}
+
+The gate set used by the compiler includes the NOT, CNOT, and Toffoli gates.
+
+When choosing the implementation of various operations consideration is given to the expansion into the Clifford+T gate set. More specifically to the minimization of T-gates. For example shared controls on Toffoli gates are desired as they result in T cancellation.
+
+\subsection{Addition}
+Addition is done using the CDKM\cite{CDKM:2004} adder as shown below:
+
+\verbatiminput{jcc-examples/add.j}
+\includegraphics[width=\textwidth]{images/add.pdf}
+
+The final carry bit is not computed in this adder.
+The result is an adder which computes $a+b \mod 2^n$
+
+\subsection{Subtraction}
+Subtraction can be done simply by reversing the addition circuit.
+
+\subsection{Multiplication}
+Multiplication is done with a simple shift and add circuit.
+An adder adding the variables $a$ and $b$ consists of a CDKM\cite{CDKM:2004} adder controlled on each bit of a.
+Each adder adds $b$ to some ancilla shifted left by the position of the control in a.
+Each adder is smaller then the last as the multiplication is preformed $\mod 2^n$.
+Below is an example of the compiler output for a multiplication:
+
+\verbatiminput{jcc-examples/mult.j}
+\includegraphics[width=\textwidth]{images/mult.pdf}
+
+\subsection{Conditional Statements}
+Conditional if-else branches can be evaluated by swapping the bits to the correct circuit path controlled on the if conditional. 
+The other circuit path is evaluated on a set of ancilla bits is initialized to $H^{\otimes n}\ket{0}$.
+Since this is an eigenvector of every permutation matrix it will be unchanged and can be cleaned up by reversing the initialization.
+
+\verbatiminput{jcc-examples/ifExample.j}
+\includegraphics[width=\textwidth]{images/ifExample.pdf}
+
+Note that the assertion is a statement about the state of the program which is true if and only if the ``if'' branch is taken rather then the ``else'' branch. 
+This is useful as it describes a property of our data that can be used to clean up the bit used to store the result of the conditional. 
+i.e. If we know that we took that if branch rather then the else branch we can XOR the conditional bit and be assured it is being reset to zero.
+
+

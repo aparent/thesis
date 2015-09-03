@@ -7,6 +7,7 @@
 \usepackage{float}
 \usepackage{subcaption}
 \usepackage{circuitikz}
+\usepackage{pgfplots}
 
 \usepackage{mathtools}
 
@@ -17,10 +18,17 @@
 \usepackage[all]{hypcap}
 \usepackage{todonotes}
 
+\usepackage{algorithm,algorithmicx}
+\usepackage{algpseudocode}
+
+\usepackage{cleveref}
+
 \input{header.tex}
 \input{Qcircuit.tex}
 
 \bibliographystyle{plain}
+
+\newfloat{program}{ht}{lop}
 %----------------------------------------------------------------------------------------------------
 
 
@@ -33,6 +41,7 @@
 \maketitle
 
 \begin{abstract}
+  A review of reversible circuits for arithmetic and circuit optimization in the context of the implementing a reversible circuit compiler.
 \end{abstract}
 \tableofcontents
 
@@ -47,227 +56,19 @@ Using this method the issue of ancilla management is avoided.
 
 In order to generate 
 
-\subsection{Janus}
-\subsubsection{Modification Operators}
+\section{Janus}
+\subsection{Modification Operators}
 In the Janus programming language\cite{YG:2007} modification operators are available for operations that can be done in-place.
-\subsubsection{If Conditions}
+\subsection{If Conditions}
 
-\subsection{Revs}\todo{A citation for this is needed.  Get this after arxiv paper is posted.}
+\section{Revs}\todo{A citation for this is needed.  Get this after arxiv paper is posted.}
 The approach taken by Revs is complementary to to Janus.
 
 
 %----------------------------------------------------------------------------------------------------
 
-\chapter{Arithmetic}
-
-A library of efficient commonly used arithmetic functions is needed for efficient circuit generation.
-Further it is useful to have in-place functions whenever possible. 
-
-\section{Addition}
-  An addition circuit is a circuit which takes two $n$ bit integers $a = a_1a_2\dotsc a_n$ and $b = b_1b_2\dotsc b_n$ and returns the sum $a+b$. 
-  \subsection{Classic Ripple} 
-    The classic ripple addition method simply adds the bits in each column starting from the least significant bit.
-    The output for that bit is the result modulo 2 and a carry is set to be added to the next column if the result is $>1$.
-
-    To preform this algorithm we will need a circuit that takes three bits then calculates a carry and a sum.
-    These can then be applied iteratively taking the two bits from the column of the numbers that are to be added as well as the previous carry.
-    
-    This can be done with a full adder circuit.
-    A full adder is a circuit which takes input bits $a$, $b$, and $c$ then returns the sum ($a \oplus b \oplus c$) as well as the carry ($ab\oplus ac \oplus bc$).
-    In figure~\ref{fig:classicalFA} an irreversible implementation can be seen.
-    \begin{figure}[ht]
-        \capstart
-        \centering 
-        \begin{circuitikz} \draw
-            (3,0) node[xor port] (abxor) {}
-            (6,-0.5) node[xor port] (abcxor) {}
-            (6,-2) node[and port] (caband) {}
-            (6,-3.5) node[and port] (aband) {}
-            (8,-2.75) node[or port] (carryor) {}
-            (0,0) node[anchor=east] (a) {$a$}
-                to[short, o-*] (0.5,0)   
-                -| (abxor.in 1)
-                (0.5,0)  |- (aband.in 1)
-            (0,-0.5) node[anchor=east] (b) {$b$}
-                to[short, o-*] (1,-0.5)    
-                (1,-0.5) -| (abxor.in 2)
-                (1,-0.5) |- (aband.in 2)
-            (0,-1) node[anchor=east] (c) {$c$}
-                to[short, o-*] (1.5,-1)   
-                (1.5,-1) |- (abcxor.in 2)
-                (1.5,-1) |- (caband.in 2)
-            (abxor.out) to[short,-*] (3.5,0)
-                (3.5,0) -| (abcxor.in 1)
-                (3.5,0) |- (caband.in 1)
-            (aband) -| (carryor.in 2)
-            (caband) -| (carryor.in 1)
-            (abcxor.out) node[anchor=west] {Sum}
-            (carryor.out) node[anchor=west] {Carry}
-            ;
-        \end{circuitikz}
-        \caption{Irreversible full adder}
-        \label{fig:classicalFA}
-    \end{figure}
-    In the reversible case a circuit (see figure~\ref{fig:reversibleFA}) can be constructed that preforms the mapping: 
-    \[
-        (a,b,c,0) \mapsto (a,b,a\oplus b\oplus c,ab\oplus ac \oplus bc)
-    \]  
-    \begin{figure}[ht]
-        \capstart
-        \centering 
-        \[
-          \Qcircuit @C=1em @R=.7em {
-              \lstick{a} & \ctrl{3} & \ctrl{2} & \qw      & \qw      & \rstick{a}\qw\\
-              \lstick{b} & \qw      & \qw      & \ctrl{2} & \ctrl{1} & \rstick{b}\qw\\
-              \lstick{c} & \ctrl{1} & \targ    & \ctrl{1} & \targ    & \rstick{a  \oplus b  \oplus c}\qw\\
-              \lstick{0} & \targ    & \qw      & \targ    & \qw      & \rstick{ab \oplus ac \oplus bc}\qw
-          }
-        \]
-        \caption{Reversible full adder}
-        \label{fig:reversibleFA}
-    \end{figure}
-    These can then be chained together as they are in the irreversible case.  
-    The result will be a circuit which takes inputs $(a,b)$ and produces outputs $(a,b,a+b)$.
-
-\subsection{In-Place Ripple}
-    It is sometimes the case that one of the input values is unneeded after the operation.
-    In that case it would save space to overwrite the value.
-    To do this we could try to construct adder which maps inputs $(a,b)\mapsto(a,a+b)$.
-
-    Such an adder is described in Cuccaro et al.\cite{CDKM:2004} (Note that not all the optimizations described in the original paper are desirable with our gate set as we wish to maximize shared controls). 
-    It is very similar to the classic ripple.
-    The main improvement is the realization that information about the carry could be stored in one of the input bits of each column.
-    This allows it to overwrite one of it's inputs with the resulting sum.
-    The circuit uses two main operations: MAJ, and UMA (See figure~\ref{fig:majuma}).
-    The MAJ operation takes an input carry $c$ and two input bits $a$ and $b$.
-    It computes the carry onto $a$ and partially computes the sum on $b$, it leaves $c$ in an unclean state to be fixed later. 
-    This circuit can be repeated and rippled through all of the columns.
-    After that is done the UMA operation can be preformed.
-    This operation cleans up $a$ and $c$ then finishes computing the sum on $b$. 
-
-    \begin{figure}[ht]
-        \capstart
-        \centering 
-        \begin{subfigure}{.45\textwidth}
-            \centering 
-            \[
-              \Qcircuit @C=1em @R=.7em {
-                 \lstick{c} & \qw          & \targ      & \ctrl{2} & \rstick{c \oplus a}\qw\\
-                 \lstick{b} & \targ        & \qw        & \ctrl{1} & \rstick{b \oplus a}\qw\\
-                 \lstick{a} & \ctrl{-1}    & \ctrl{-2}  & \targ    & \rstick{ab \oplus ac \oplus bc}\qw 
-              }
-            \]
-            \caption{MAJ}
-        \end{subfigure}
-        \begin{subfigure}{.45\textwidth}
-            \centering 
-            \[
-              \Qcircuit @C=1em @R=.7em {
-                  & \ctrl{2} & \targ      & \ctrl{1} & \qw\\
-                  & \ctrl{1} & \qw        & \targ    & \qw\\
-                  & \targ    & \ctrl{-2}  & \qw      & \qw 
-              }
-            \]
-            \caption{UMA}
-        \end{subfigure}
-        \caption{}
-        \label{fig:majuma}
-    \end{figure}
-
-\section{Converting OR to XOR}\todo{Reference revs paper}
-In the case of mutually exclusive statements XOR is equivalent to OR.
-That is to say $a \lor b = a \oplus b$ if $a = 1 \implies b = 0$ and $b = 1 \implies a =0$.  
-For example $a\land b \lor \neg a \land c = a\land b \oplus \neg a \land c$. 
-
-This is very useful as it allows us to avoid the use of Toffoli gates and use less ancilla.
-For example if we wished to compute $a \lor b \lor c$ we might use the circuit:
-
-  \[
-    \Qcircuit @C=1em @R=.7em {
-        \lstick{a} & \ctrlo{3} & \qw      & \ctrlo{3} & \rstick{a}\qw\\
-        \lstick{b} & \ctrlo{2} & \qw      & \ctrlo{2} & \rstick{b}\qw\\
-        \lstick{c} & \qw       & \ctrlo{2}& \qw       & \rstick{c}\qw\\
-        \lstick{0} & \targ     & \ctrl{1} & \targ     & \rstick{0}\qw \\
-        \lstick{0} & \qw       & \targ    & \targ      & \rstick{a \lor b \lor c}\qw
-    }
-  \]
-
-Where as $a \oplus b \oplus c$ can be computed as:
-
-\[
-    \Qcircuit @C=1em @R=.7em {
-        \lstick{a} & \ctrl{3}  & \qw      & \qw      & \rstick{a}\qw\\
-        \lstick{b} & \qw       & \ctrl{2} & \qw      & \rstick{b}\qw\\
-        \lstick{c} & \qw       & \qw      & \ctrl{1} & \rstick{c}\qw\\
-        \lstick{0} & \targ     & \targ    & \targ    & \rstick{a \oplus b \oplus c}\qw \\
-    }
-\]
-
-Or if one of $a$, $b$, or $c$. Are not needed in the later computation it can be done in-place as:
-
- \[
-    \Qcircuit @C=1em @R=.7em {
-        \lstick{a} & \ctrl{2}  & \qw      & \rstick{a}\qw\\
-        \lstick{b} & \qw       & \ctrl{1} & \rstick{b}\qw\\
-        \lstick{c} & \targ     & \targ    & \rstick{a \oplus b \oplus c}\qw \\
-    }
-\]
-
-Given a set of AND expressions that are combined using OR we want to find sets of mutually exclusive statements that minimize the use of AND.
-We consider each AND expression to be a vertex on a graph and add edges between vertices that are mutually exclusive.
-Now we cover this graph using a minimum number of cliques.
-
-After finding these cliques each set of mutually exclusive statements can be implemented by evaluating the AND statements and combining all of the values on a single ancilla using XOR for each clique.
-These results can then be combined using OR statements (since OR is associative it does not matter how we group the statements). 
-
-This algorithm has been implemented and tested on the BLIF benchmarks. \todo{add reference}
-The results are shown below:
-\todo{chart}
-
-
-%----------------------------------------------------------------------------------------------------
-
-\chapter{jcc}
-\section{Implementation}
-\subsection{Gate Set}
-
-The gate set used by the compiler includes the NOT, CNOT, and Toffoli gates.
-
-When choosing the implementation of various operations consideration is given to the expansion into the Clifford+T gate set. More specifically to the minimization of T-gates. For example shared controls on Toffoli gates are desired as they result in T cancellation.
-
-\subsection{Addition}
-Addition is done using the CDKM\cite{CDKM:2004} adder as shown below:
-
-\verbatiminput{jcc-examples/add.j}
-\includegraphics[width=\textwidth]{images/add.pdf}
-
-The final carry bit is not computed in this adder.
-The result is an adder which computes $a+b \mod 2^n$
-
-\subsection{Subtraction}
-Subtraction can be done simply by reversing the addition circuit.
-
-\subsection{Multiplication}
-Multiplication is done with a simple shift and add circuit.
-An adder adding the variables $a$ and $b$ consists of a CDKM\cite{CDKM:2004} adder controlled on each bit of a.
-Each adder adds $b$ to some ancilla shifted left by the position of the control in a.
-Each adder is smaller then the last as the multiplication is preformed $\mod 2^n$.
-Below is an example of the compiler output for a multiplication:
-
-\verbatiminput{jcc-examples/mult.j}
-\includegraphics[width=\textwidth]{images/mult.pdf}
-
-\subsection{Conditional Statements}
-Conditional if-else branches can be evaluated by swapping the bits to the correct circuit path controlled on the if conditional. 
-The other circuit path is evaluated on a set of ancilla bits is initialized to $H^{\otimes n}\ket{0}$.
-Since this is an eigenvector of every permutation matrix it will be unchanged and can be cleaned up by reversing the initialization.
-
-\verbatiminput{jcc-examples/ifExample.j}
-\includegraphics[width=\textwidth]{images/ifExample.pdf}
-
-Note that the assertion is a statement about the state of the program which is true if and only if the ``if'' branch is taken rather then the ``else'' branch. 
-This is useful as it describes a property of our data that can be used to clean up the bit used to store the result of the conditional. 
-i.e. If we know that we took that if branch rather then the else branch we can XOR the conditional bit and be assured it is being reset to zero.
+\include{arithmetic}
+\include{jcc}
 
 \bibliography{thesis}
 

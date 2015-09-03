@@ -1,0 +1,8 @@
+*.aux
+thesis.bbl
+thesis.blg
+thesis.log
+thesis.out
+thesis.tdo
+thesis.toc
+*.pdf
