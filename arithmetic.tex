@@ -208,11 +208,10 @@ Further it is useful to have in-place functions whenever possible.
       These were found by a simple dynamic program which evaluated the total gate size for every possible split at every level and chose the optimal ones.
 		
       As using these methods we find an optimal cutoff value of 11 (see figure \ref{fig:cutoffs}).
-      \begin{figure}[ht]
-        \centering
-        \begin{subfigure}[b]{0.45\textwidth}
+      \begin{figure}[p]
         \capstart
-        \begin{tikzpicture}[scale=0.5]
+        \resizebox {\textwidth} {!} {
+        \begin{tikzpicture}
           \begin{axis}[
             xlabel={Cutoff},
             ylabel={Average Circuit Size (interval 50 - 500)},
@@ -220,13 +219,14 @@ Further it is useful to have in-place functions whenever possible.
             \addplot[blue] table {data/cutoffs.dat};
           \end{axis}
         \end{tikzpicture}
+        }
         \caption{Average circuit size over the interval 50-500 for various cutoff values}
         \label{fig:cutoffs}
-      \end{subfigure}
-      \hfill
-      \begin{subfigure}[b]{0.45\textwidth}
+      \end{figure}
+      \begin{figure}[p]
         \capstart
-        \begin{tikzpicture}[scale=0.5]
+        \resizebox {\textwidth} {!} {
+        \begin{tikzpicture}
           \begin{axis}[
             xlabel={Input Size},
             ylabel={Toffoli Gates},
@@ -236,20 +236,20 @@ Further it is useful to have in-place functions whenever possible.
             \addplot[blue] table {data/akara25.dat};
           \end{axis}
         \end{tikzpicture}
+        }
         \caption{Comparison of various cutoffs for the adaptive cutoff version.}
         \label{fig:aKara}
-      \end{subfigure}
-      \caption{}
-      \end{figure}
+     \end{figure}
 
    \subsubsection{Time-Space Tradeoffs}
      We see in figures \ref{fig:cutoff} and \ref{fig:size} that there are trade-offs available between circuits size and gate count available by changing the cutoff value.
   \subsection{Comparison of Multipliers}
     \subsubsection{Gate Count}
       The Karatsuba multiplier has the lowest asymptotic gate count of the circuits discussed.
-     \begin{figure}[ht]
+     \begin{figure}[p]
         \capstart
         \centering
+        \resizebox {\textwidth} {!} {
         \begin{tikzpicture}
           \begin{axis}[
             xlabel={Input Size},
@@ -270,6 +270,7 @@ Further it is useful to have in-place functions whenever possible.
             \addlegendentry{naive}
           \end{axis}
         \end{tikzpicture}
+        }
         \caption{Plot of circuit sizes verses input size for various various Karatsuba cutoffs. 
                  The Legend shows the implementation (skara for the simple version and aKara for the adaptive cutoff) as well as a number indicating the cutoff size. }
         \label{fig:cutoff}
@@ -278,22 +279,17 @@ Further it is useful to have in-place functions whenever possible.
 
     \subsubsection{Space Used}
       The naive implementation uses the lowest number of input bits using only a single ancilla.
-      \begin{figure}
-      \centering
-      \begin{subfigure}[b]{0.45\textwidth}
+      \begin{figure}[p]
         \capstart
         \includegraphics[width=\textwidth]{images/LKaraSize} 
         \caption{Plot of bits used verses input size for various Karatsuba cutoffs}
         \label{fig:size}
-      \end{subfigure}
-      \hfill
-      \begin{subfigure}[b]{0.45\textwidth}
+      \end{figure}
+      \begin{figure}[p]
         \capstart
         \includegraphics[width=\textwidth]{images/LKaraDepth2} 
         \caption{Plot of Toffoli depth verses input size for various Karatsuba cutoffs}
         \label{fig:depth}
-      \end{subfigure}
-      \caption{}
       \end{figure}
 
     \subsubsection{Depth}
@@ -390,7 +386,7 @@ Further it is useful to have in-place functions whenever possible.
             At the end the copied out set of bits $\sigma$ determine the directions of rotation.
             $\theta$ will approach zero so the higher order bits could possibly be cleaned up at the end of the step.
             Figure \ref{fig:CORDICDirections} shows a circuit for calculating $\sigma$.
-            \begin{figure}[ht]
+            \begin{figure}[p]
                 \capstart
                 \centering
                 \includegraphics[width=\textwidth]{images/CORDICDirections} 
@@ -402,7 +398,7 @@ Further it is useful to have in-place functions whenever possible.
             The actual rotation section is done using the iterative process above (\ref{eq:cordIter}).
 
             This circuit is shown in figure \ref{fig:CORDICRotations}.
-            \begin{figure}[ht]
+            \begin{figure}[p]
                 \capstart
                 \centering
                 \includegraphics[width=\textwidth]{images/CORDICRotations} 

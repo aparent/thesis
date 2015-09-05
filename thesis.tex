@@ -49,12 +49,24 @@
 
 
 %----------------------------------------------------------------------------------------------------
-\chapter{Ancilla Management}
+\chapter{Memory Management}
 
+In a reversible computation memory management is somewhat complicated by the reversibility constraint.
+
+For example consider a classical computation where we have inputs $a$, and $b$ and wish to know the output $a\land b$.
+Further the values of $a$, and $b$ are not needed later in the computation.
+In this case we can calculate $(a,b) \mapsto a \land b$, take the output $a\land b$, and discard the values of $a$, and $b$.
+Since this function is not injective (ex. $0\land 0 = 0$ and $1 \land 0 = 0$) it is not reversible.
+
+One way to make it reversible is to use a Toffoli gate.
+The Toffoli gate implements the injective function $(a,b,c) \mapsto (a,b,a\land b \oplus c)$.
+If $c$ is initialized to zero we have $(a,b,0) \mapsto (a,b,a\land b)$.
+This means that we cannot simply discard the values of $a$ and $b$.
+
+\section{Bennett}
 Any irreversible function can be made reversible using the ``Bennett Method''\cite{Bennett:73}.
-Using this method the issue of ancilla management is avoided.
+This result was intended to show that in principle any irreversible computation can be made reversible.
 
-In order to generate 
 
 \section{Janus}
 \subsection{Modification Operators}
