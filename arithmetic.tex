@@ -14,7 +14,7 @@ Further it is useful to have in-place functions whenever possible.
     
     This can be done with a full adder circuit.
     A full adder is a circuit which takes input bits $a$, $b$, and $c$ then returns the sum ($a \oplus b \oplus c$) as well as the carry ($ab\oplus ac \oplus bc$).
-    In figure~\ref{fig:classicalFA} an irreversible implementation can be seen.
+    In \cref{fig:classicalFA} an irreversible implementation can be seen.
     \begin{figure}[ht]
         \capstart
         \centering 
@@ -78,7 +78,7 @@ Further it is useful to have in-place functions whenever possible.
     It is very similar to the classic ripple.
     The main improvement is the realization that information about the carry could be stored in one of the input bits of each column.
     This allows it to overwrite one of it's inputs with the resulting sum.
-    The circuit uses two main operations: MAJ, and UMA (See figure~\ref{fig:majuma}).
+    The circuit uses two main operations: MAJ, and UMA (See \cref{fig:majuma}).
     The MAJ operation takes an input carry $c$ and two input bits $a$ and $b$.
     It computes the carry onto $a$ and partially computes the sum on $b$, it leaves $c$ in an unclean state to be fixed later. 
     This circuit can be repeated and rippled through all of the columns.
@@ -133,9 +133,9 @@ Further it is useful to have in-place functions whenever possible.
 
 \section{Multiplication}
   \subsection{Controlled Addition Multiplier}
-    A very simple implementation of multiplication as a controlled addition circuit (see figure \ref{fig:ctrlRipple}).  
+    A very simple implementation of multiplication as a controlled addition circuit (see \cref{fig:ctrlRipple}).  
     Given two numbers as bit strings $a$ and $b$ their product can be found by repeatedly shifting forward by one and adding $b$ to the result controlled on the next bit in $a$.
-    See figure \ref{fig:multAdd} for a four bit example.
+    See \cref{fig:multAdd} for a four bit example.
 
     This is an out of place multiplier that uses only 1 additional ancilla for the adder circuits.
     \begin{figure}[ht]
@@ -209,73 +209,31 @@ Further it is useful to have in-place functions whenever possible.
 
       Another way to improve this algorithm is to attempt to choose more intelligent splits rather then always splitting the inputs in half at each level.
       This is important because the bit length of the numbers we are adding together may not be a power of two so dividing the input in two at each level might not be optimal.
-      In figure \ref{fig:cutoff} the line plotted as \verb+AKara10+ shows the result of using the optimal splits at each level.
+      In \cref{fig:cutoff} the line plotted as \verb+AKara10+ shows the result of using the optimal splits at each level.
       These were found by a simple dynamic program which evaluated the total gate size for every possible split at every level and chose the optimal ones.
 		
-      As using these methods we find an optimal cutoff value of 11 (see figure \ref{fig:cutoffs}).
+      As using these methods we find an optimal cutoff value of 11 (see \cref{fig:cutoffs}).
       \begin{sidewaysfigure}[p]
         \capstart
-        \resizebox {\textwidth} {!} {
-        \begin{tikzpicture}
-          \begin{axis}[
-            xlabel={Cutoff},
-            ylabel={Average Circuit Size (interval 50 - 500)},
-          ]
-            \addplot[blue] table {data/cutoffs.dat};
-          \end{axis}
-        \end{tikzpicture}
-        }
+        \includegraphics[width=\textwidth]{images/avgCutoffs.tikz}
         \caption{Average circuit size over the interval 50-500 for various cutoff values}
         \label{fig:cutoffs}
       \end{sidewaysfigure}
       \begin{sidewaysfigure}[p]
         \capstart
-        \resizebox {\textwidth} {!} {
-        \begin{tikzpicture}
-          \begin{axis}[
-            xlabel={Input Size},
-            ylabel={Toffoli Gates},
-          ]
-            \addplot[green] table {data/akara9.dat};
-            \addplot[purple] table {data/akara15.dat};
-            \addplot[blue] table {data/akara25.dat};
-          \end{axis}
-        \end{tikzpicture}
-        }
+        \includegraphics[width=\textwidth]{images/akara.tikz}
         \caption{Comparison of various cutoffs for the adaptive cutoff version.}
         \label{fig:aKara}
      \end{sidewaysfigure}
 
    \subsubsection{Time-Space Tradeoffs}
-     We see in figures \ref{fig:cutoff} and \ref{fig:size} that there are trade-offs available between circuits size and gate count available by changing the cutoff value.
+     We see in \cref{fig:cutoff,fig:size} that there are trade-offs available between circuits size and gate count available by changing the cutoff value.
   \subsection{Comparison of Multipliers}
     \subsubsection{Gate Count}
       The Karatsuba multiplier has the lowest asymptotic gate count of the circuits discussed.
      \begin{sidewaysfigure}[p]
         \capstart
-        \centering
-        \resizebox {\textwidth} {!} {
-        \begin{tikzpicture}
-          \begin{axis}[
-            xlabel={Input Size},
-            ylabel={Toffoli Gates},
-            legend pos=north west,
-          ]
-            \addplot[green] table {data/skara5.dat};
-            \addlegendentry{sKara 5}
-            \addplot[blue] table {data/skara9.dat};
-            \addlegendentry{sKara 9}
-            \addplot[red] table {data/skara20.dat};
-            \addlegendentry{sKara 20}
-            \addplot[purple] table {data/skara50.dat};
-            \addlegendentry{sKara 50}
-            \addplot[brown] table {data/akara9.dat};
-            \addlegendentry{aKara 9}
-            \addplot[black] table {data/naiveMult.dat};
-            \addlegendentry{naive}
-          \end{axis}
-        \end{tikzpicture}
-        }
+        \includegraphics[width=\textwidth]{images/cutoff.tikz}
         \caption{Plot of circuit sizes verses input size for various various Karatsuba cutoffs. 
                  The Legend shows the implementation (skara for the simple version and aKara for the adaptive cutoff) as well as a number indicating the cutoff size. }
         \label{fig:cutoff}
@@ -400,19 +358,20 @@ Further it is useful to have in-place functions whenever possible.
             \end{figure}
 
         \paragraph{Preforming Rotations}
-            The actual rotation section is done using the iterative process above (\ref{eq:cordIter}).
+            The actual rotation section is done using the iterative process above (\cref{eq:cordIter}).
 
-            This circuit is shown in figure \ref{fig:CORDICRotations}.
+            This circuit is shown in \cref{fig:CORDICRotations}.
             \begin{figure}[p]
                 \capstart
                 \centering
                 \includegraphics[width=\textwidth]{images/CORDICRotations} 
                 \caption{Circuit to determine preform Rotations. 
-                         $x$ and $y$ are both intialized to $1/\sqrt{2}$.
+                         $x$ and $y$ are both initialized to $1/\sqrt{2}$.
                          Garbage is cleaned at the end by copying out the result and repeating the circuit.}
                 \label{fig:CORDICRotations}
             \end{figure}
         \subsubsection{Analysis}
+        Note that the circuits shown in \cref{fig:CORDICRotations,fig:CORDICDirections} can be partially parallelized.
 
 \section{Converting OR to XOR}\todo{Reference revs paper}
 In the case of mutually exclusive statements XOR is equivalent to OR.

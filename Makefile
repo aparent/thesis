@@ -8,9 +8,9 @@ diagrams = $(diagrams-jcc-examples) $(diagrams-svg)
 all: thesis
 
 thesis: $(diagrams) data/plot-data
-	pdflatex thesis.tex
+	pdflatex -draftmode thesis.tex
 	bibtex thesis.aux
-	pdflatex thesis.tex
+	pdflatex -draftmode thesis.tex
 	pdflatex thesis.tex
 
 images/%.svg: jcc-examples/%.j

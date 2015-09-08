@@ -6,9 +6,9 @@ import System.IO
 
 main :: IO()
 main = do
-  mapM_ writeAKaraData [8,9,10,15,25]
+  mapM_ writeAKaraData [8,9,10,11,15,25]
   mapM_ writeSimpleKaraData [5,9,20,50]
-  writeFile "data/cutoffs.dat" $ spaceSep $ map (avgCutoff (50,500)) [3..50]
+  writeFile "data/cutoffs.dat" $ spaceSep $ map (avgCutoff (50,500)) [3..35]
   writeFile "data/naiveMult.dat" $ spaceSep $ map (\x-> (x,naiveMult x)) [4..400]
   return ()
 

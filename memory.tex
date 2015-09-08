@@ -39,4 +39,10 @@ The post condition can be used to clear this bit as the pre-condition may no lon
 \section{Revs}\todo{A citation for this is needed.  Get this after arxiv paper is posted.}
 The approach taken by Revs is complementary to to Janus.
 
+\subsection{Eager Cleanup}
+When using the Revs ``eager cleanup'' method data dependencies are tracked in order to minimize the time that intermediate values are kept allocated.
 
+If a value is no longer needed in a computation it can then be checked that the information needed to clean it up is available.
+If so it can immediately be cleaned and the ancilla can be freed for future use in the computation.
+To track this a heap of currently available ancilla is kept.
+This ensures that the lowest available numbered ancilla is always the one allocated so ancilla use is minimized.

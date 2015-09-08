@@ -1,0 +1,21 @@
+\begin{tikzpicture}
+  \begin{axis}[
+    xlabel={Input Size},
+    ylabel={Toffoli Gates},
+    legend pos=north west,
+  ]
+    \addplot[green] table {data/skara5.dat};
+    \addlegendentry{sKara 5}
+    \addplot[blue] table {data/skara9.dat};
+    \addlegendentry{sKara 9}
+    \addplot[red] table {data/skara20.dat};
+    \addlegendentry{sKara 20}
+    \addplot[purple] table {data/skara50.dat};
+    \addlegendentry{sKara 50}
+    \addplot[brown] table {data/akara11.dat};
+    \addlegendentry{aKara 11}
+    \addplot[black] table {data/naiveMult.dat};
+    \addlegendentry{naive}
+    \end{axis}
+\end{tikzpicture}
+

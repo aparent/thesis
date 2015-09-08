@@ -1,0 +1,8 @@
+\begin{tikzpicture}
+    \begin{axis}[
+        xlabel={Cutoff},
+        ylabel={Average Circuit Size (interval 50 - 500)},
+    ]
+    \addplot[blue] table {data/cutoffs.dat};
+    \end{axis}
+\end{tikzpicture}

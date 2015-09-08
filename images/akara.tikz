@@ -1,0 +1,14 @@
+\begin{tikzpicture}
+  \begin{axis}[
+    xlabel={Input Size},
+    ylabel={Toffoli Gates},
+    legend pos=north west,
+  ]
+  \addplot[green] table {data/akara9.dat};
+  \addlegendentry{5}
+  \addplot[purple] table {data/akara15.dat};
+  \addlegendentry{15}
+  \addplot[blue] table {data/akara25.dat};
+  \addlegendentry{25}
+  \end{axis}
+\end{tikzpicture}
