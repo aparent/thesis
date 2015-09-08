@@ -7,7 +7,7 @@ diagrams = $(diagrams-jcc-examples) $(diagrams-svg)
 
 all: thesis
 
-thesis: $(diagrams) 
+thesis: $(diagrams) data/plot-data
 	pdflatex thesis.tex
 	bibtex thesis.aux
 	pdflatex thesis.tex
@@ -16,6 +16,9 @@ thesis: $(diagrams)
 images/%.svg: jcc-examples/%.j
 	jcc $^ -O -d $@
 
-
 %.pdf: %.svg
 	inkscape $^ --export-pdf=$@
+
+data/plot-data: code/kara.hs
+	runhaskell code/kara.hs	
+	touch data/plot-data

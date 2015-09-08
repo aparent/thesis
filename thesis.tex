@@ -8,6 +8,7 @@
 \usepackage{subcaption}
 \usepackage{circuitikz}
 \usepackage{pgfplots}
+\usepackage{rotating}
 
 \usepackage{mathtools}
 
@@ -29,11 +30,18 @@
 \bibliographystyle{plain}
 
 \newfloat{program}{ht}{lop}
+
+\pgfplotsset{
+    axis x line=bottom,
+    axis y line=left,
+    every outer x axis line/.append style={-stealth,gray},
+    every outer y axis line/.append style={-stealth,gray},
+}
 %----------------------------------------------------------------------------------------------------
 
 
 \begin{document}
-\listoftodos 
+\listoftodos
 
 \title{Compiling Reversible Circuits}
 \author{Alex Parent}
@@ -47,38 +55,13 @@
 
 \chapter{Introduction}
 
-
 %----------------------------------------------------------------------------------------------------
-\chapter{Memory Management}
 
-In a reversible computation memory management is somewhat complicated by the reversibility constraint.
-
-For example consider a classical computation where we have inputs $a$, and $b$ and wish to know the output $a\land b$.
-Further the values of $a$, and $b$ are not needed later in the computation.
-In this case we can calculate $(a,b) \mapsto a \land b$, take the output $a\land b$, and discard the values of $a$, and $b$.
-Since this function is not injective (ex. $0\land 0 = 0$ and $1 \land 0 = 0$) it is not reversible.
-
-One way to make it reversible is to use a Toffoli gate.
-The Toffoli gate implements the injective function $(a,b,c) \mapsto (a,b,a\land b \oplus c)$.
-If $c$ is initialized to zero we have $(a,b,0) \mapsto (a,b,a\land b)$.
-This means that we cannot simply discard the values of $a$ and $b$.
-
-\section{Bennett}
-Any irreversible function can be made reversible using the ``Bennett Method''\cite{Bennett:73}.
-This result was intended to show that in principle any irreversible computation can be made reversible.
-
-
-\section{Janus}
-\subsection{Modification Operators}
-In the Janus programming language\cite{YG:2007} modification operators are available for operations that can be done in-place.
-\subsection{If Conditions}
-
-\section{Revs}\todo{A citation for this is needed.  Get this after arxiv paper is posted.}
-The approach taken by Revs is complementary to to Janus.
-
+\chapter{Quantum Circuits} 
 
 %----------------------------------------------------------------------------------------------------
 
+\include{memory}
 \include{arithmetic}
 \include{jcc}
 
