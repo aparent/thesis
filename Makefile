@@ -20,5 +20,5 @@ images/%.svg: jcc-examples/%.j
 	inkscape $^ --export-pdf=$@
 
 data/plot-data: code/kara.hs
-	runhaskell code/kara.hs	
+	runhaskell code/kara.hs
 	touch data/plot-data

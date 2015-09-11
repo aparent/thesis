@@ -373,7 +373,44 @@ Further it is useful to have in-place functions whenever possible.
         \subsubsection{Analysis}
         Note that the circuits shown in \cref{fig:CORDICRotations,fig:CORDICDirections} can be partially parallelized.
 
-\section{Converting OR to XOR}\todo{Reference revs paper}
+\section{Boolean Expressions}
+
+One method of generating quantum circuits from boolean expressions is to first transform them into circuits of NOT, XOR, and AND operations.
+
+AND operations can be reproduced using toffoli gates onto ancilla:
+\[
+    \Qcircuit @C=1em @R=.7em {
+        \lstick{a} & \ctrl{2}  & \rstick{a}\qw\\
+        \lstick{b} & \ctrl{1}  & \rstick{b}\qw\\
+        \lstick{0} & \targ     & \rstick{ab}\qw \\
+    }
+\]
+
+XOR operations can be reproduced using two CNOT gates onto ancilla:
+\[
+    \Qcircuit @C=1em @R=.7em {
+        \lstick{a} & \ctrl{2} & \qw      & \rstick{a}\qw\\
+        \lstick{b} & \qw      & \ctrl{1} & \rstick{b}\qw\\
+        \lstick{0} & \targ    & \targ    & \rstick{a \oplus b}\qw \\
+    }
+\]
+
+Notice that AND operations are more costly both because they require a Toffoli gate rather then a CNOT gate,
+and because they can only be applied through a XOR operation rather then directly.
+
+One simple optimization is to notice that the toffoli gate includes an XOR operation.
+So we can calculate an expression such as $ab \oplus cd$ with:
+\[
+    \Qcircuit @C=1em @R=.7em {
+        \lstick{a} & \ctrl{4} & \qw      & \rstick{a}\qw\\
+        \lstick{b} & \ctrl{3} & \qw      & \rstick{b}\qw\\
+        \lstick{c} & \qw      & \ctrl{2} & \rstick{c}\qw\\
+        \lstick{d} & \qw      & \ctrl{1} & \rstick{d}\qw\\
+        \lstick{0} & \targ    & \targ    & \rstick{ab \oplus cd}\qw \\
+    }
+\]
+
+\subsection{Converting OR to XOR}\todo{Reference revs paper}
 In the case of mutually exclusive statements XOR is equivalent to OR.
 That is to say $a \lor b = a \oplus b$ if $a = 1 \implies b = 0$ and $b = 1 \implies a =0$.  
 For example $a\land b \lor \neg a \land c = a\land b \oplus \neg a \land c$. 
