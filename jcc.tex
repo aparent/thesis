@@ -33,15 +33,15 @@ Below is an example of the compiler output for a multiplication:
 \includegraphics[width=\textwidth]{images/mult.pdf}
 
 \subsection{Conditional Statements}
-Conditional if-else branches can be evaluated by swapping the bits to the correct circuit path controlled on the if conditional. 
+Conditional if-else branches can be evaluated by swapping the bits to the correct circuit path controlled on the if conditional.
 The other circuit path is evaluated on a set of ancilla bits is initialized to $H^{\otimes n}\ket{0}$.
 Since this is an eigenvector of every permutation matrix it will be unchanged and can be cleaned up by reversing the initialization.
 
 \verbatiminput{jcc-examples/ifExample.j}
 \includegraphics[width=\textwidth]{images/ifExample.pdf}
 
-Note that the assertion is a statement about the state of the program which is true if and only if the ``if'' branch is taken rather then the ``else'' branch. 
-This is useful as it describes a property of our data that can be used to clean up the bit used to store the result of the conditional. 
+Note that the assertion is a statement about the state of the program which is true if and only if the ``if'' branch is taken rather then the ``else'' branch.
+This is useful as it describes a property of our data that can be used to clean up the bit used to store the result of the conditional.
 i.e. If we know that we took that if branch rather then the else branch we can XOR the conditional bit and be assured it is being reset to zero.
 
 

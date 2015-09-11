@@ -1,23 +1,23 @@
 \chapter{Arithmetic}
 
 A library of efficient commonly used arithmetic functions is needed for efficient circuit generation.
-Further it is useful to have in-place functions whenever possible. 
+Further it is useful to have in-place functions whenever possible.
 
 \section{Addition}
-  An addition circuit is a circuit which takes two $n$ bit integers $a = a_1a_2\dotsc a_n$ and $b = b_1b_2\dotsc b_n$ and returns the sum $a+b$. 
-  \subsection{Classic Ripple} 
+  An addition circuit is a circuit which takes two $n$ bit integers $a = a_1a_2\dotsc a_n$ and $b = b_1b_2\dotsc b_n$ and returns the sum $a+b$.
+  \subsection{Classic Ripple}
     The classic ripple addition method simply adds the bits in each column starting from the least significant bit.
     The output for that bit is the result modulo 2 and a carry is set to be added to the next column if the result is $>1$.
 
     To preform this algorithm we will need a circuit that takes three bits then calculates a carry and a sum.
     These can then be applied iteratively taking the two bits from the column of the numbers that are to be added as well as the previous carry.
-    
+
     This can be done with a full adder circuit.
     A full adder is a circuit which takes input bits $a$, $b$, and $c$ then returns the sum ($a \oplus b \oplus c$) as well as the carry ($ab\oplus ac \oplus bc$).
     In \cref{fig:classicalFA} an irreversible implementation can be seen.
     \begin{figure}[ht]
         \capstart
-        \centering 
+        \centering
         \begin{circuitikz} \draw
             (3,0) node[xor port] (abxor) {}
             (6,-0.5) node[xor port] (abcxor) {}
@@ -25,15 +25,15 @@ Further it is useful to have in-place functions whenever possible.
             (6,-3.5) node[and port] (aband) {}
             (8,-2.75) node[or port] (carryor) {}
             (0,0) node[anchor=east] (a) {$a$}
-                to[short, o-*] (0.5,0)   
+                to[short, o-*] (0.5,0)
                 -| (abxor.in 1)
                 (0.5,0)  |- (aband.in 1)
             (0,-0.5) node[anchor=east] (b) {$b$}
-                to[short, o-*] (1,-0.5)    
+                to[short, o-*] (1,-0.5)
                 (1,-0.5) -| (abxor.in 2)
                 (1,-0.5) |- (aband.in 2)
             (0,-1) node[anchor=east] (c) {$c$}
-                to[short, o-*] (1.5,-1)   
+                to[short, o-*] (1.5,-1)
                 (1.5,-1) |- (abcxor.in 2)
                 (1.5,-1) |- (caband.in 2)
             (abxor.out) to[short,-*] (3.5,0)
@@ -48,13 +48,13 @@ Further it is useful to have in-place functions whenever possible.
         \caption{Irreversible full adder}
         \label{fig:classicalFA}
     \end{figure}
-    In the reversible case a circuit (see figure~\ref{fig:reversibleFA}) can be constructed that preforms the mapping: 
+    In the reversible case a circuit (see figure~\ref{fig:reversibleFA}) can be constructed that preforms the mapping:
     \[
         (a,b,c,0) \mapsto (a,b,a\oplus b\oplus c,ab\oplus ac \oplus bc)
-    \]  
+    \]
     \begin{figure}[ht]
         \capstart
-        \centering 
+        \centering
         \[
           \Qcircuit @C=1em @R=.7em {
               \lstick{a} & \ctrl{3} & \ctrl{2} & \qw      & \qw      & \rstick{a}\qw\\
@@ -66,7 +66,7 @@ Further it is useful to have in-place functions whenever possible.
         \caption{Reversible full adder}
         \label{fig:reversibleFA}
     \end{figure}
-    These can then be chained together as they are in the irreversible case.  
+    These can then be chained together as they are in the irreversible case.
     The result will be a circuit which takes inputs $(a,b)$ and produces outputs $(a,b,a+b)$.
 
 \subsection{In-Place Ripple}
@@ -74,38 +74,38 @@ Further it is useful to have in-place functions whenever possible.
     In that case it would save space to overwrite the value.
     To do this we could try to construct adder which maps inputs $(a,b)\mapsto(a,a+b)$.
 
-    Such an adder is described in Cuccaro et al.\cite{CDKM:2004} (Note that not all the optimizations described in the original paper are desirable with our gate set as we wish to maximize shared controls). 
+    Such an adder is described in Cuccaro et al.\cite{CDKM:2004} (Note that not all the optimizations described in the original paper are desirable with our gate set as we wish to maximize shared controls).
     It is very similar to the classic ripple.
     The main improvement is the realization that information about the carry could be stored in one of the input bits of each column.
     This allows it to overwrite one of it's inputs with the resulting sum.
     The circuit uses two main operations: MAJ, and UMA (See \cref{fig:majuma}).
     The MAJ operation takes an input carry $c$ and two input bits $a$ and $b$.
-    It computes the carry onto $a$ and partially computes the sum on $b$, it leaves $c$ in an unclean state to be fixed later. 
+    It computes the carry onto $a$ and partially computes the sum on $b$, it leaves $c$ in an unclean state to be fixed later.
     This circuit can be repeated and rippled through all of the columns.
     After that is done the UMA operation can be preformed.
-    This operation cleans up $a$ and $c$ then finishes computing the sum on $b$. 
+    This operation cleans up $a$ and $c$ then finishes computing the sum on $b$.
 
     \begin{figure}[ht]
         \capstart
-        \centering 
+        \centering
         \begin{subfigure}{.45\textwidth}
-            \centering 
+            \centering
             \[
               \Qcircuit @C=1em @R=.7em {
                  \lstick{c} & \qw          & \targ      & \ctrl{2} & \rstick{c \oplus a}\qw\\
                  \lstick{b} & \targ        & \qw        & \ctrl{1} & \rstick{b \oplus a}\qw\\
-                 \lstick{a} & \ctrl{-1}    & \ctrl{-2}  & \targ    & \rstick{ab \oplus ac \oplus bc}\qw 
+                 \lstick{a} & \ctrl{-1}    & \ctrl{-2}  & \targ    & \rstick{ab \oplus ac \oplus bc}\qw
               }
             \]
             \caption{MAJ}
         \end{subfigure}
         \begin{subfigure}{.45\textwidth}
-            \centering 
+            \centering
             \[
               \Qcircuit @C=1em @R=.7em {
                   & \ctrl{2} & \targ      & \ctrl{1} & \qw\\
                   & \ctrl{1} & \qw        & \targ    & \qw\\
-                  & \targ    & \ctrl{-2}  & \qw      & \qw 
+                  & \targ    & \ctrl{-2}  & \qw      & \qw
               }
             \]
             \caption{UMA}
@@ -119,7 +119,7 @@ Further it is useful to have in-place functions whenever possible.
     \begin{figure}[ht]
       \capstart
       \centering
-      \includegraphics[width=\textwidth]{images/4BitRippleAdderCtrl} 
+      \includegraphics[width=\textwidth]{images/4BitRippleAdderCtrl}
       \caption{Controlled In-Place Ripple Adder}
       \label{fig:ctrlRipple}
     \end{figure}
@@ -133,7 +133,7 @@ Further it is useful to have in-place functions whenever possible.
 
 \section{Multiplication}
   \subsection{Controlled Addition Multiplier}
-    A very simple implementation of multiplication as a controlled addition circuit (see \cref{fig:ctrlRipple}).  
+    A very simple implementation of multiplication as a controlled addition circuit (see \cref{fig:ctrlRipple}).
     Given two numbers as bit strings $a$ and $b$ their product can be found by repeatedly shifting forward by one and adding $b$ to the result controlled on the next bit in $a$.
     See \cref{fig:multAdd} for a four bit example.
 
@@ -141,29 +141,29 @@ Further it is useful to have in-place functions whenever possible.
     \begin{figure}[ht]
       \capstart
       \centering
-      \includegraphics[scale=0.25]{images/multCtrlAdd} 
+      \includegraphics[scale=0.25]{images/multCtrlAdd}
       \caption{Controlled Addition Multiplier}
       \label{fig:multAdd}
     \end{figure}
     \subsubsection{Analysis}
-      This circuit takes $n$ Toffoli gates to copy down the initial value.  
+      This circuit takes $n$ Toffoli gates to copy down the initial value.
       It then uses $n-1$ controlled in place addition circuits to produce the final value.
-        
+
       So if we define $A^{ctrl}_n$ to be the Toffoli count for a controlled adder of size $n$ we get $M_n = n + (n-1)A^{ctrl}_n$
       Where $M_n$ is the gate count for a controlled addition based multiplication circuit of size $n$.
       From \eqref{eq:cadd} we know the controlled addition circuit uses $4n+1$ Toffoli gates this gives a full count:
       \begin{align} \label{eq:caddtoff}
         M_n = 4n^2 -2n -1
-      \end{align} 
- 
+      \end{align}
+
 \subsection{Quantum Karatsuba}
     The following reversible algorithm for Karatsuba improves upon previous work\cite{PF:2006}.
     It does then primary by using in place addition to minimize garbage growth at each level.
     It also attempts to choose optimal splits instead of dividing the number in half at each step,
     This is helpful when the integer size is not a power of 2.
-    
-    Let $n\geq 1$ and let $x$ and $y$ be $n$-bit integers. 
-    The well-known Karatsuba\cite{KO:1963} algorithm is based on the observation that by writing $x=x_1 2^{\lceil n/2\rceil}+x_0$ and $y=y_1 2^{\lceil n/2\rceil }+y_0$ the product $xy$ can be evaluated as $xy=2^n A + 2^{\rceil n/2 \rceil} B + C$, where 
+
+    Let $n\geq 1$ and let $x$ and $y$ be $n$-bit integers.
+    The well-known Karatsuba\cite{KO:1963} algorithm is based on the observation that by writing $x=x_1 2^{\lceil n/2\rceil}+x_0$ and $y=y_1 2^{\lceil n/2\rceil }+y_0$ the product $xy$ can be evaluated as $xy=2^n A + 2^{\rceil n/2 \rceil} B + C$, where
     \begin{align*}
       A &= x_1 y_1, \\
       B &= (x_0+x_1)(y_0+y_1) - x_0 y_0 - x_1 y_1,\\
@@ -172,46 +172,46 @@ Further it is useful to have in-place functions whenever possible.
     \begin{figure}[ht]
       \capstart
       \centering
-      \includegraphics[width=2\textwidth/3]{images/karatsuba2} 
+      \includegraphics[width=2\textwidth/3]{images/karatsuba2}
       \caption{Karatsuba Multiplication Circuit.
                Note: In the above circuit notation the black part of the box designates the modified bits in the adder.}
       \label{fig:kara2}
      \end{figure}
     \subsubsection{Analysis}
-      Note that the cost for the computation of $A$, $B$, and $C$ are $3$ multiplications and four additions . 
-      Note further that the additions to compose the final result do not have to be carried out as the bit representation of $xy$ is the concatenation of the bit representations of $A$, $B$, and $C$. 
-      For $m\geq 1$, let $M^{g}_m$ denote the Toffoli cost of a circuit that multiplies $m$-bit inputs $x$ and $y$ using ancillas, i.e., a circuit that maps $(x, y, 0, 0) \mapsto (x, y, g(x,y), xy)$, where $xy$ is a $2m$-bit output, and $g(x,y)$ is an garbage output on $k\geq 1$ bits. 
-      Furthermore, denote by $A_m$ the cost for an (in-place) adder of two $m$-bit numbers. 
+      Note that the cost for the computation of $A$, $B$, and $C$ are $3$ multiplications and four additions .
+      Note further that the additions to compose the final result do not have to be carried out as the bit representation of $xy$ is the concatenation of the bit representations of $A$, $B$, and $C$.
+      For $m\geq 1$, let $M^{g}_m$ denote the Toffoli cost of a circuit that multiplies $m$-bit inputs $x$ and $y$ using ancillas, i.e., a circuit that maps $(x, y, 0, 0) \mapsto (x, y, g(x,y), xy)$, where $xy$ is a $2m$-bit output, and $g(x,y)$ is an garbage output on $k\geq 1$ bits.
+      Furthermore, denote by $A_m$ the cost for an (in-place) adder of two $m$-bit numbers.
       It is known that $A_m$ can be bounded by at most $2m$ Toffoli gates. Let $K_n$ denote the number of Toffoli gates that arise in the quantum Karatsuba algorithm (See fig \cref{fig:kara2}).
-      The outputs of one step of the recursion are $x_0$,$x_1$, $y_0$, $y_1$, $x_0y_0$, $x_1 y_1$, and $xy$. 
-      It is easy to see that allowing garbage, $K_n^g$ can be implemented using $3$ multipliers of half the bit size, $4$ in-place adders of size $n$ and $4$ in place adders of size $n/2$ (note the subtracters are just reversed adders). 
-      The base case is a multiplier for two one-bit numbers which can be done with one Toffoli gate, i.e., $K_1^{g}=1$. 
-      We obtain the following recursion: 
+      The outputs of one step of the recursion are $x_0$,$x_1$, $y_0$, $y_1$, $x_0y_0$, $x_1 y_1$, and $xy$.
+      It is easy to see that allowing garbage, $K_n^g$ can be implemented using $3$ multipliers of half the bit size, $4$ in-place adders of size $n$ and $4$ in place adders of size $n/2$ (note the subtracters are just reversed adders).
+      The base case is a multiplier for two one-bit numbers which can be done with one Toffoli gate, i.e., $K_1^{g}=1$.
+      We obtain the following recursion:
       \begin{align}
         K_n^{g} = 3 K_{n/2}^{g} + 4 \left(A_{n} + A_{n/2}\right); \quad K_1^{g}=1.
       \end{align}
-      For the overall clean implementation of the Karatsuba algorithm we first run this circuit forward, copy out the final result using $n$ CNOTs, and then run the whole circuit backward. 
-      This leads to an overall cost of $K_n = 2 K_n^{g}$ and $n$ CNOTs. 
-      For the moment we focus on the Toffoli cost only. 
+      For the overall clean implementation of the Karatsuba algorithm we first run this circuit forward, copy out the final result using $n$ CNOTs, and then run the whole circuit backward.
+      This leads to an overall cost of $K_n = 2 K_n^{g}$ and $n$ CNOTs.
+      For the moment we focus on the Toffoli cost only.
       By expansion we obtain that:
       \begin{align}
-        K_n^{g} &= 3^{\log_2(n)} K_1^{g} + 4\left( A_{n}+ A_{n/2} \right) + 12\left( A_{n/2}+ A_{n/4} \right)\notag\\ 
+        K_n^{g} &= 3^{\log_2(n)} K_1^{g} + 4\left( A_{n}+ A_{n/2} \right) + 12\left( A_{n/2}+ A_{n/4} \right)\notag\\
                 & + \ldots + 4 \cdot 3^{\log_2(n)-1} \left(A_2 + A_1\right)
       \end{align}
-      Using that the Toffoli cost of $A_{n/2^i}$ is $2(n/2^i)$, we obtain for the overall Toffoli cost the following bound: 
+      Using that the Toffoli cost of $A_{n/2^i}$ is $2(n/2^i)$, we obtain for the overall Toffoli cost the following bound:
       \begin{align}
         K_n &= 2\left(3^{\log_2 n } + 4 \sum_{i=0}^{\log_2 n - 1} 3^i 2(3n/2^i)\right)\notag\\
             &= 2n^{\log_2 3} + 48n \left(\frac{1- (3/2)^{\log_2 n}}{1-3/2}\right) \notag\\
             &= 2n^{\log_2 3} + 96n \left((3/2)^{\log_2{n}} -1\right) \leq 98 n^{\log_2{3}}
       \end{align}
-      This bound can be improved by replacing the recursive call to Karatsuba with an instance of some naive multiplication once a certain cutoff has been reached. 
-      Looking at \cref{fig:cutoff} we see a comparison of various cutoff values (the naive method is also plotted for reference). 
+      This bound can be improved by replacing the recursive call to Karatsuba with an instance of some naive multiplication once a certain cutoff has been reached.
+      Looking at \cref{fig:cutoff} we see a comparison of various cutoff values (the naive method is also plotted for reference).
 
       Another way to improve this algorithm is to attempt to choose more intelligent splits rather then always splitting the inputs in half at each level.
       This is important because the bit length of the numbers we are adding together may not be a power of two so dividing the input in two at each level might not be optimal.
       In \cref{fig:cutoff} the line plotted as \verb+AKara10+ shows the result of using the optimal splits at each level.
       These were found by a simple dynamic program which evaluated the total gate size for every possible split at every level and chose the optimal ones.
-		
+
       As using these methods we find an optimal cutoff value of 11 (see \cref{fig:cutoffs}).
       \begin{sidewaysfigure}[p]
         \capstart
@@ -234,7 +234,7 @@ Further it is useful to have in-place functions whenever possible.
      \begin{sidewaysfigure}[p]
         \capstart
         \includegraphics[width=\textwidth]{images/cutoff.tikz}
-        \caption{Plot of circuit sizes verses input size for various various Karatsuba cutoffs. 
+        \caption{Plot of circuit sizes verses input size for various various Karatsuba cutoffs.
                  The Legend shows the implementation (skara for the simple version and aKara for the adaptive cutoff) as well as a number indicating the cutoff size. }
         \label{fig:cutoff}
       \end{sidewaysfigure}
@@ -244,13 +244,13 @@ Further it is useful to have in-place functions whenever possible.
       The naive implementation uses the lowest number of input bits using only a single ancilla.
       \begin{sidewaysfigure}[p]
         \capstart
-        \includegraphics[width=\textwidth]{images/LKaraSize} 
+        \includegraphics[width=\textwidth]{images/LKaraSize}
         \caption{Plot of bits used verses input size for various Karatsuba cutoffs}
         \label{fig:size}
       \end{sidewaysfigure}
       \begin{sidewaysfigure}[p]
         \capstart
-        \includegraphics[width=\textwidth]{images/LKaraDepth2} 
+        \includegraphics[width=\textwidth]{images/LKaraDepth2}
         \caption{Plot of Toffoli depth verses input size for various Karatsuba cutoffs}
         \label{fig:depth}
       \end{sidewaysfigure}
@@ -266,32 +266,32 @@ Further it is useful to have in-place functions whenever possible.
       \caption{Integer Division with Remainder: find $R$ and $Q$ for $N/D$}
       \begin{algorithmic}[1]
         \Require $D \neq 0$
-        \State $Q \gets 0$              
-        \State $R \gets 0$                 
+        \State $Q \gets 0$
+        \State $R \gets 0$
         \For{$i = n-1 \dots 0$}
-          \State $R \gets R \ll 1$  
-          \State $R(0) \gets N(i)$ \label{line:intdiv:setToN} 
+          \State $R \gets R \ll 1$
+          \State $R(0) \gets N(i)$ \label{line:intdiv:setToN}
           \If{$R \geq D$} \label{line:intdiv:compare}
-            \State $R\gets R - D$               
+            \State $R\gets R - D$
             \State $Q(i) \gets 1$ \label{line:intdiv:setQ}
 
           \EndIf
-        \EndFor 
+        \EndFor
       \end{algorithmic}
       \label{algo:intdiv}
     \end{program}
     An interesting feature of this algorithm is that combined with an in-place adder\cite{CDKM:2004} it can easily be made partially in-place.
 
-    On \cref{line:intdiv:setToN} instead of allocating new space for $R(0)$ we can just use $N(i)$ as $R(0)$ since it will not be used again in the algorithm. 
+    On \cref{line:intdiv:setToN} instead of allocating new space for $R(0)$ we can just use $N(i)$ as $R(0)$ since it will not be used again in the algorithm.
     In doing this we will overwrite the value of $N$ with $R$ as the algorithm is run.
-    The if statement on \Cref{line:intdiv:compare} can be preformed with a comparison circuit.  
+    The if statement on \Cref{line:intdiv:compare} can be preformed with a comparison circuit.
     The result bit can be used to control the subtraction $R-D$.
-    The value of the result bit is the same as $Q(i)$ after the assignment on \ref{line:intdiv:setQ}, so $Q(i)$ can just be taken to be the result bit. 
+    The value of the result bit is the same as $Q(i)$ after the assignment on \ref{line:intdiv:setQ}, so $Q(i)$ can just be taken to be the result bit.
     This avoids additional ancilla and the assignment to $Q(i)$.
 
 
 \section{Trigonometric functions}
-    \subsection{CORDIC} 
+    \subsection{CORDIC}
         The basic idea of the CORDIC\cite{V:1959} algorithm is to apply repeated rotations which converge on a desired value.
         \[ \theta = \alpha_0 + \alpha_1 + \dotsb + \alpha_{n-1} \]
         The issue is that computing rotations is generally expensive;
@@ -305,22 +305,22 @@ Further it is useful to have in-place functions whenever possible.
             \sin\gamma_i & \cos\gamma_i
           \end{bmatrix}
         \]
-        Using trig identities we can simplify this to 
+        Using trig identities we can simplify this to
         \[
           R_i = K_i
                 \begin{bmatrix}
                   1            & -\tan\gamma_i \\
-                  \tan\gamma_i & 1 
+                  \tan\gamma_i & 1
                 \end{bmatrix}
         \]
         Where $K_i = \frac{1}{\sqrt{1+\tan^2\gamma_i}}$.
 
         We can collect all the $K_i$ terms into a single pre-computed scaling factor:
-        \[ K(n) = \prod_{i=0}^{n-1}K_i \] 
+        \[ K(n) = \prod_{i=0}^{n-1}K_i \]
         This can be applied with a single multiplication after the computation is complete.
 
-        We can select $\gamma_i = \tan^{-1}2^{-i}$ as our set of angles so that all multiplications can be done simply as bit shifts. 
-        These angles will be pre-computed 
+        We can select $\gamma_i = \tan^{-1}2^{-i}$ as our set of angles so that all multiplications can be done simply as bit shifts.
+        These angles will be pre-computed
         All that is left to do is find the directions of rotation.
         We can approximate some angle $\theta$ with the iterative process: $\theta_{i+1} = \theta_i + \sigma_i\gamma_i$.
         We choose the rotation direction $\sigma$ by comparing $\theta_i$ with $\theta$.
@@ -329,7 +329,7 @@ Further it is useful to have in-place functions whenever possible.
 
         This iterative process can be stated as:
         \begin{equation}\label{eq:cordIter}
-            \begin{aligned}        
+            \begin{aligned}
                 x_{i+1}      &= x_i - \sigma_iy_i2^{-i}\\
                 y_{i+1}      &= y_i + \sigma_ix_i2^{-i}\\
                 \theta_{i+1} &= \theta_i - \sigma_i\gamma_i
@@ -344,7 +344,7 @@ Further it is useful to have in-place functions whenever possible.
         Our input is the angle $\theta$ and our output is ($x$,$y$) where $\tan\theta = y/x$.
 
         \paragraph{Finding the directions of rotation}
-            The directions of rotation can be determined using the sign bit of $\theta$.  
+            The directions of rotation can be determined using the sign bit of $\theta$.
             At each step we copy out the sign bit of $\theta$ then add the angle $\gamma_i$ if $\theta$ is negative or subtract if it is positive.
             At the end the copied out set of bits $\sigma$ determine the directions of rotation.
             $\theta$ will approach zero so the higher order bits could possibly be cleaned up at the end of the step.
@@ -352,7 +352,7 @@ Further it is useful to have in-place functions whenever possible.
             \begin{figure}[p]
                 \capstart
                 \centering
-                \includegraphics[width=\textwidth]{images/CORDICDirections} 
+                \includegraphics[width=\textwidth]{images/CORDICDirections}
                 \caption{Circuit to determine directions of rotation.  The controls determine whether $\gamma$ is added or subtracted.}
                 \label{fig:CORDICDirections}
             \end{figure}
@@ -364,8 +364,8 @@ Further it is useful to have in-place functions whenever possible.
             \begin{figure}[p]
                 \capstart
                 \centering
-                \includegraphics[width=\textwidth]{images/CORDICRotations} 
-                \caption{Circuit to determine preform Rotations. 
+                \includegraphics[width=\textwidth]{images/CORDICRotations}
+                \caption{Circuit to determine preform Rotations.
                          $x$ and $y$ are both initialized to $1/\sqrt{2}$.
                          Garbage is cleaned at the end by copying out the result and repeating the circuit.}
                 \label{fig:CORDICRotations}
@@ -412,8 +412,8 @@ So we can calculate an expression such as $ab \oplus cd$ with:
 
 \subsection{Converting OR to XOR}\todo{Reference revs paper}
 In the case of mutually exclusive statements XOR is equivalent to OR.
-That is to say $a \lor b = a \oplus b$ if $a = 1 \implies b = 0$ and $b = 1 \implies a =0$.  
-For example $a\land b \lor \neg a \land c = a\land b \oplus \neg a \land c$. 
+That is to say $a \lor b = a \oplus b$ if $a = 1 \implies b = 0$ and $b = 1 \implies a =0$.
+For example $a\land b \lor \neg a \land c = a\land b \oplus \neg a \land c$.
 
 This is very useful as it allows us to avoid the use of Toffoli gates and use less ancilla.
 For example if we wished to compute $a \lor b \lor c$ we might use the circuit:
@@ -454,13 +454,13 @@ We consider each AND expression to be a vertex on a graph and add edges between 
 Now we cover this graph using a minimum number of cliques.
 
 After finding these cliques each set of mutually exclusive statements can be implemented by evaluating the AND statements and combining all of the values on a single ancilla using XOR for each clique.
-These results can then be combined using OR statements (since OR is associative it does not matter how we group the statements). 
+These results can then be combined using OR statements (since OR is associative it does not matter how we group the statements).
 
 This algorithm has been implemented and tested on the BLIF benchmarks. \todo{add reference}
 The results are shown below:
 \todo{chart}
 
-\section{Find First\label{sec:findFirst}} 
+\section{Find First\label{sec:findFirst}}
   Suppose you want to preform a set of functions which return some boolean value and you wish to know the first such function which returns $0$.
   For example if we have an $n$-bit number and we wish to find the position of the first $0$ value.
 
@@ -469,9 +469,9 @@ The results are shown below:
   To do this we must look at a subset whose value is unique to the previous step.
   Note some difficulty is introduced by the reversible nature of the circuit in that we cannot depend on parts of the state that we are updating.
   To do this we simply follow a binary counting method which flips one bit each step (Grey Code).
-  Since only one bit is flipped per iteration the context of the unflipped bits is sufficient to verify the previous steps. 
-  An example of such a chain is shown below where the underlined portions of the state are the ones verified before the next step: 
-  \[ 
-    000 \to 00\underline{1} \to 0\underline{1}1 \to 0\underline{10} \to \underline{1}10 \to 
+  Since only one bit is flipped per iteration the context of the unflipped bits is sufficient to verify the previous steps.
+  An example of such a chain is shown below where the underlined portions of the state are the ones verified before the next step:
+  \[
+    000 \to 00\underline{1} \to 0\underline{1}1 \to 0\underline{10} \to \underline{1}10 \to
     \underline{1}1\underline{1} \to \underline{10}1 \to 100
   \]
