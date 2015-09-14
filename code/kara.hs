@@ -6,10 +6,12 @@ import System.IO
 
 main :: IO()
 main = do
-  mapM_ writeAKaraData [8,9,10,11,15,25]
-  mapM_ writeSimpleKaraData [5,9,20,50]
   writeFile "data/cutoffs.dat" $ spaceSep $ map (avgCutoff (50,500)) [3..35]
   writeFile "data/naiveMult.dat" $ spaceSep $ map (\x-> (x,naiveMult x)) [4..400]
+  writeFile "data/naiveMultDepth.dat" $ spaceSep $ map (\x-> (x,naiveMultDepth x)) [4..400]
+  writeFile "data/naiveMultSize.dat" $ spaceSep $ map (\x-> (x,naiveMultSize x)) [4..400]
+  mapM_ writeSimpleKaraData [5,9,20,50]
+  mapM_ writeAKaraData [8,9,10,11,15,25]
   return ()
 
 
@@ -17,7 +19,10 @@ writeAKaraData :: Int -> IO()
 writeAKaraData n =  writeFile ("data/akara" ++show n ++ ".dat") $ spaceSep $ map (\x-> (x,2*(karaM n x))) [4..400]
 
 writeSimpleKaraData :: Int -> IO()
-writeSimpleKaraData n =  writeFile ("data/skara" ++show n ++ ".dat") $ spaceSep $ map (\x-> (x,simpleKara n x)) [4..400]
+writeSimpleKaraData n = do
+    writeFile ("data/skara" ++show n ++ ".dat") $ spaceSep $ map (\x-> (x,simpleKara n x)) [4..400]
+    writeFile ("data/skaraSize" ++show n ++ ".dat") $ spaceSep $ map (\x-> (x,simpleKaraSize n x)) [4..400]
+    writeFile ("data/skaraDepth" ++show n ++ ".dat") $ spaceSep $ map (\x-> (x,simpleKaraDepth n x)) [4..400]
 
 spaceSep :: (Show a , Show b) => [(a,b)] -> String
 spaceSep = foldl (\x (y1,y2) -> x ++ show y1 ++" " ++ show y2 ++ "\n") ""
@@ -61,3 +66,28 @@ simpleKara cutoff size = 2 * sKara size
   where sKara n | n <= cutoff = naiveMult n
                 | otherwise = 3 * ripAdd n + 4 * ripAdd (half n) + 3 * sKara (half n)
         half n =  div n 2 + mod n 2
+
+simpleKaraSize :: Int -> Int -> Int
+simpleKaraSize cuttoff n
+    | n <= cuttoff =
+        2 * n
+    | n `mod` 2 == 1 =
+        n + 1 + 3 * simpleKaraSize cuttoff (n `div` 2 + 1)
+    | otherwise =
+        n + 1 + 3 * simpleKaraSize cuttoff (n `div` 2)
+
+naiveMultSize :: Int -> Int
+naiveMultSize n = 4 * n
+
+naiveMultDepth :: Int -> Int
+naiveMultDepth n = 4*n*n - 2*n - 1
+
+simpleKaraDepth :: Int -> Int -> Int
+simpleKaraDepth cuttoff n
+    | n <= cuttoff =
+        naiveMultDepth n
+    | n `mod` 2 == 1 =
+        3 * ripAddDepth + 2 * simpleKaraDepth cuttoff (n `div` 2 + 1)
+    | otherwise =
+        3 * ripAddDepth + 2 * simpleKaraDepth cuttoff (n `div` 2)
+    where ripAddDepth = 2*n

@@ -1,0 +1,19 @@
+\begin{tikzpicture}
+  \begin{axis}[
+    xlabel={Input Size},
+    ylabel={Toffoli Gates},
+    legend pos=north west,
+  ]
+    \addplot[green] table {data/skaraSize5.dat};
+    \addlegendentry{sKara 5}
+    \addplot[blue] table {data/skaraSize9.dat};
+    \addlegendentry{sKara 9}
+    \addplot[red] table {data/skaraSize20.dat};
+    \addlegendentry{sKara 20}
+    \addplot[purple] table {data/skaraSize50.dat};
+    \addlegendentry{sKara 50}
+    \addplot[black] table {data/naiveMultSize.dat};
+    \addlegendentry{naive}
+    \end{axis}
+\end{tikzpicture}
+
