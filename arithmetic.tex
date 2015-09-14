@@ -1,5 +1,4 @@
 \chapter{Arithmetic}
-
 A library of efficient commonly used arithmetic functions is needed for efficient circuit generation.
 Further it is useful to have in-place functions whenever possible.
 
@@ -349,8 +348,6 @@ Further it is useful to have in-place functions whenever possible.
 
 \section{Boolean Expressions}
 
-One method of generating quantum circuits from boolean expressions is to first transform them into circuits of NOT, XOR, and AND operations.
-
 AND operations can be reproduced using toffoli gates onto ancilla:
 \[
     \Qcircuit @C=1em @R=.7em {
@@ -383,6 +380,18 @@ So we can calculate an expression such as $ab \oplus cd$ with:
         \lstick{0} & \targ    & \targ    & \rstick{ab \oplus cd}\qw \\
     }
 \]
+
+One method of generating quantum circuits from boolean expressions is to first transform them into circuits of NOT, XOR, and AND operations.
+Given an expression with the recursive sturcture:
+\begin{verbatim}
+TERM = VAR
+     | AND (TERM list)
+     | XOR (TERM list)
+     | NOT TERM
+\end{verbatim}
+An algorithm to produce a circuit for such an expression is given by:
+\todo{Boolean expression algorithm: Formally write this up}
+
 
 \subsection{Converting OR to XOR}\todo{Reference revs paper}
 In the case of mutually exclusive statements XOR is equivalent to OR.

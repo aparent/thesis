@@ -1,5 +1,4 @@
 \chapter{Memory Management}
-
 In a reversible computation memory management is somewhat complicated by the reversibility constraint.
 
 For example consider a classical computation where we have inputs $a$, and $b$ and wish to know the output $a\land b$.
@@ -16,10 +15,14 @@ This means that we cannot simply discard the values of $a$ and $b$.
 Any irreversible function can be made reversible using the ``Bennett Method''\cite{Bennett:73}.
 This result was intended to show that in principle any irreversible computation can be made reversible.
 
+\subsection{Pebble Games}
 
 \section{Janus}
+The Janus\cite{YG:2007,LD:1982} programing language guarantees that all programs implemented in it are reversible.
+Since each statement in the language is reversible any ancilla used can be cleaned up in between statements.
+
 \subsection{Modification Operators}
-In the Janus programming language\cite{YG:2007,LD:1982} modification operators are available for operations that can be done in-place.
+Modification operators are available for operations that can be done in-place.
 For example the addition modification operator, \verb|+=|.
 
 Operations that cannot be done in place can only occur to the right of an in place operator.
@@ -34,9 +37,9 @@ and a post-condition (true if and only if the top branch is taken).
 
 These are very useful in the context of memory management.
 The pre-condition can be used to set a bit which controls which operations are preformed.
-The post condition can be used to clear this bit as the pre-condition may no longer be true after the loop is preformed.
+The post-condition can be used to clear this bit as the pre-condition may no longer be true after the loop is preformed.
 
-\section{Revs}\todo{A citation for this is needed.  Get this after arxiv paper is posted.}
+\section{Revs}
 The approach taken by Revs is complementary to to Janus.
 
 \subsection{Eager Cleanup}
