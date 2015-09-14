@@ -1,0 +1,28 @@
+\begin{tikzpicture} \draw
+      (3,0) node[xor port] (abxor) {}
+      (6,-0.5) node[xor port] (abcxor) {}
+      (6,-2) node[and port] (caband) {}
+      (6,-3.5) node[and port] (aband) {}
+      (8,-2.75) node[or port] (carryor) {}
+      (0,0) node[anchor=east] (a) {$a$}
+          to[short, o-*] (0.5,0)
+          -| (abxor.in 1)
+          (0.5,0)  |- (aband.in 1)
+      (0,-0.5) node[anchor=east] (b) {$b$}
+          to[short, o-*] (1,-0.5)
+          (1,-0.5) -| (abxor.in 2)
+          (1,-0.5) |- (aband.in 2)
+      (0,-1) node[anchor=east] (c) {$c$}
+          to[short, o-*] (1.5,-1)
+          (1.5,-1) |- (abcxor.in 2)
+          (1.5,-1) |- (caband.in 2)
+      (abxor.out) to[short,-*] (3.5,0)
+          (3.5,0) -| (abcxor.in 1)
+          (3.5,0) |- (caband.in 1)
+      (aband) -| (carryor.in 2)
+      (caband) -| (carryor.in 1)
+      (abcxor.out) node[anchor=west] {Sum}
+      (carryor.out) node[anchor=west] {Carry}
+      ;
+\end{tikzpicture}
+

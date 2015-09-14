@@ -1,6 +1,27 @@
-% used with the assignemnt template
+\usepackage{etex}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{tikz,circuitikz,tikzscale}
+\usepackage{pgfplots}
+\usepackage{tikzscale}
+\usepackage{rotating}
+
 \usepackage{mathtools}
-\usepackage{tikz}
+\usepackage{algorithm,algorithmicx,algpseudocode}
+\usepackage{verbatim}
+
+\usepackage{microtype}
+\usepackage[colorlinks=false, pdfborder={0 0 0}]{hyperref}
+\usepackage[all]{hypcap}
+\usepackage{todonotes}
+
+\usepackage{cleveref}
+
+\usetikzlibrary{external} 
+\tikzexternalize[prefix=tikzPictures/]
+
+% used with the assignemnt template
 \let\underdot=\d % rename builtin command \d{} to \underdot{}
 \renewcommand{\d}[2]{\frac{d #1}{d #2}} % for derivatives
 \newcommand{\dd}[2]{\frac{d^2 #1}{d #2^2}} % for double derivatives
@@ -14,3 +35,7 @@
 
 \let\underdot=\d % rename builtin command \d{} to \underdot{}
 \renewcommand{\d}[2]{\frac{d #1}{d #2}} % for derivatives
+
+\makeatletter
+\renewcommand{\todo}[2][]{\tikzexternaldisable\@todo[#1]{#2}\tikzexternalenable}
+\makeatother

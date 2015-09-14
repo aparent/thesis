@@ -1,9 +1,13 @@
+X.tex
+.DS_Store
 thesis.bbl
 thesis.blg
 thesis.log
 thesis.out
 thesis.tdo
 thesis.toc
+*.log
 *.aux
+*.auxlock
 *.swp
 *.pdf
