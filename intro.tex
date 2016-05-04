@@ -1,0 +1,51 @@
+\chapter{Introduction}
+
+\section{Landauer's principle}
+
+This principle states that any logical irreversible operation must be
+accompanied by a corresponding entropy increase in non-information bearing
+degrees of freedom\cite{bennett03}. Another way of stating this is that
+an operation which does not preserve information must have an associated energy
+cost.
+
+The minimum bound on the amount of energy required to preform an irreversible
+operation is called the Landauer limit ($kT\ln 2$).
+
+Reversible computing avoids this minimum cost by ensuring that no information is
+erased by the computation.
+
+\section{Reversible Circuits}
+
+Consider a classical computation where we have inputs $a$, and $b$
+and wish to know the output $a\land b$. Further the values of $a$, and $b$ are
+not needed later in the computation. In this case we can calculate $(a,b)
+\mapsto a \land b$, take the output $a\land b$, and discard the values of $a$,
+and $b$. Since this function is not injective (ex. $0\land 0 = 0$ and $1 \land 0
+= 0$) it is not reversible.
+
+One way to make it reversible is to use a Toffoli gate. The Toffoli gate
+implements the injective function $(a,b,c) \mapsto (a,b,a\land b \oplus c)$. If
+$c$ is initialized to zero we have $(a,b,0) \mapsto (a,b,a\land b)$. Note that
+this means the values of $a$ and $b$ remain on the input bits after the
+computation.
+
+Any irreversible function can be made reversible using the ``Bennett
+Method''\cite{Bennett:73}. In this method each irreversible gate is replaced
+with a reversible version with additional space allocated as necessary. Then the
+final result is copied out to newly allocated set of bits and the entire circuit
+is repeated in reverse. So given an irreversible function $f(x)$ (where $f(x)$
+is of size $n$) we can use the Bennett method to generate a reversible function
+$(x,0^{n+m}) \mapsto (x,f(x),0^m)$.
+
+
+\section{Quantum Circuits}
+
+\todo{ Discuss choice of Clifford plus T gate set and motivate with discussion
+of surface code architecture}
+
+\todo{ Discuss high cost of T-gate and comparatively low cost of Clifford gates
+and non-local interactions.  }
+
+\todo {Show decomposition of Toffoli gate to Clifford+T and discuss what this
+means for circuit optimization.}
+

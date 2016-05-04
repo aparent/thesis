@@ -45,3 +45,24 @@ This is useful as it describes a property of our data that can be used to clean 
 i.e. If we know that we took that if branch rather then the else branch we can XOR the conditional bit and be assured it is being reset to zero.
 
 
+\subsection{Loops}
+In the circuit model we need to implement all loop operations up to some max
+bound. This is especially important in the Quantum model as some states in a
+superposition may require more loop iterations then others to evaluate.
+
+So to implement a loop we want to repeatedly preform some computation until a
+condition is met. We then want to stop preforming that computation for the
+remainder of the loop.
+
+Swapping out of the loop using as done in conditional statements will not work
+since some of the superposition states will reset the condition bit.
+
+On solution currently implemented in the compiler is to only allow loops for
+which the number of iterations is known at compile time. In that case it is
+simple to implement since the circuit will just be repeated a known number of
+times.
+
+Alternatively if a conditional exit is required the counter described in
+\cref{sec:findFirst} can incremented conditionally on the exit condition.
+The body of the loop can then be controlled by checking against the expected
+value of the counter for that iteration.

@@ -1,26 +1,39 @@
 \chapter{Arithmetic}
-A library of efficient commonly used arithmetic functions is needed for efficient circuit generation.
-Further it is useful to have in-place functions whenever possible.
+
+A library of efficient commonly used arithmetic functions is needed for
+efficient circuit generation.  Further it is useful to have in-place functions
+whenever possible.
 
 \section{Addition}
-  An addition circuit is a circuit which takes two $n$ bit integers $a = a_1a_2\dotsc a_n$ and $b = b_1b_2\dotsc b_n$ and returns the sum $a+b$.
+
+  An addition circuit is a circuit which takes two $n$ bit integers $a =
+  a_1a_2\dotsc a_n$ and $b = b_1b_2\dotsc b_n$ and returns the sum $a+b$.
+
   \subsection{Classic Ripple}
-    The classic ripple addition method simply adds the bits in each column starting from the least significant bit.
-    The output for that bit is the result modulo 2 and a carry is set to be added to the next column if the result is $>1$.
 
-    To preform this algorithm we will need a circuit that takes three bits then calculates a carry and a sum.
-    These can then be applied iteratively taking the two bits from the column of the numbers that are to be added as well as the previous carry.
+    The classic ripple addition method simply adds the bits in each column
+    starting from the least significant bit.  The output for that bit is the
+    result modulo 2 and a carry is set to be added to the next column if the
+    result is $>1$.
 
-    This can be done with a full adder circuit.
-    A full adder is a circuit which takes input bits $a$, $b$, and $c$ then returns the sum ($a \oplus b \oplus c$) as well as the carry ($ab\oplus ac \oplus bc$).
-    In \cref{fig:classicalFA} an irreversible implementation can be seen.
-    \begin{figure}[ht]
+    To preform this algorithm we will need a circuit that takes three bits then
+    calculates a carry and a sum.  These can then be applied iteratively taking
+    the two bits from the column of the numbers that are to be added as well as
+    the previous carry.
+
+    This can be done with a full adder circuit.  A full adder is a circuit which
+    takes input bits $a$, $b$, and $c$ then returns the sum ($a \oplus b \oplus
+    c$) as well as the carry ($ab\oplus ac \oplus bc$).
+
+    \Cref{fig:classicalFA} shows an irreversible implmentation.
+
+    \begin{marginfigure}
         \capstart
         \centering
-        \includegraphics[width=\textwidth]{images/classicalFA.pdf}
+        \includegraphics[width=\hsize]{images/classicalFA.pdf}
         \caption{Irreversible full adder}
         \label{fig:classicalFA}
-    \end{figure}
+    \end{marginfigure}
     In the reversible case a circuit (see figure~\ref{fig:reversibleFA}) can be constructed that preforms the mapping:
     \[
         (a,b,c,0) \mapsto (a,b,a\oplus b\oplus c,ab\oplus ac \oplus bc)
@@ -186,47 +199,47 @@ Further it is useful to have in-place functions whenever possible.
       These were found by a simple dynamic program which evaluated the total gate size for every possible split at every level and chose the optimal ones.
 
       As using these methods we find an optimal cutoff value of 11 (see \cref{fig:cutoffs}).
-      \begin{sidewaysfigure}[p]
+      \begin{figure}[p]
         \capstart
-        \includegraphics[width=\textwidth]{images/avgCutoffs.tikz}
+        \includegraphics[width=\textwidth,height=0.4\textheight]{images/avgCutoffs.tikz}
         \caption{Average circuit size over the interval 50-500 for various cutoff values}
         \label{fig:cutoffs}
-      \end{sidewaysfigure}
-      \begin{sidewaysfigure}[p]
+      \end{figure}
+      \begin{figure}[p]
         \capstart
-        \includegraphics[width=\textwidth]{images/akara.tikz}
+        \includegraphics[width=\textwidth,height=0.4\textheight]{images/akara.tikz}
         \caption{Comparison of various cutoffs for the adaptive cutoff version.}
         \label{fig:aKara}
-     \end{sidewaysfigure}
+     \end{figure}
 
    \subsubsection{Time-Space Tradeoffs}
      We see in \cref{fig:cutoff,fig:size} that there are trade-offs available between circuits size and gate count available by changing the cutoff value.
   \subsection{Comparison of Multipliers}
     \subsubsection{Gate Count}
       The Karatsuba multiplier has the lowest asymptotic gate count of the circuits discussed.
-     \begin{sidewaysfigure}[p]
+     \begin{figure}[p]
         \capstart
-        \includegraphics[width=\textwidth]{images/cutoff.tikz}
+        \includegraphics[width=\textwidth,height=0.4\textheight]{images/cutoff.tikz}
         \caption{Plot of circuit sizes verses input size for various various Karatsuba cutoffs.
                  The Legend shows the implementation (skara for the simple version and aKara for the adaptive cutoff) as well as a number indicating the cutoff size. }
         \label{fig:cutoff}
-      \end{sidewaysfigure}
+      \end{figure}
 
 
     \subsubsection{Space Used}
       The naive implementation uses the lowest number of input bits using only a single ancilla.
-      \begin{sidewaysfigure}[p]
+      \begin{figure}[p]
         \capstart
-        \includegraphics[width=\textwidth]{images/karaSize.tikz}
+        \includegraphics[width=\textwidth,height=0.4\textheight]{images/karaSize.tikz}
         \caption{Plot of bits used verses input size for various Karatsuba cutoffs}
         \label{fig:size}
-      \end{sidewaysfigure}
-      \begin{sidewaysfigure}[p]
+      \end{figure}
+      \begin{figure}[p]
         \capstart
-        \includegraphics[width=\textwidth]{images/karaDepth.tikz}
+        \includegraphics[width=\textwidth,height=0.4\textheight]{images/karaDepth.tikz}
         \caption{Plot of Toffoli depth verses input size for various Karatsuba cutoffs}
         \label{fig:depth}
-      \end{sidewaysfigure}
+      \end{figure}
 
     \subsubsection{Depth}
       The Wallace tree achieves the best asymptotic depth.

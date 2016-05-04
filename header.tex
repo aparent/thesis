@@ -1,4 +1,6 @@
 \usepackage{etex}
+\reserveinserts{28}
+
 \usepackage{graphicx}
 \usepackage{float}
 \usepackage{subcaption}
@@ -8,17 +10,19 @@
 \usepackage{rotating}
 
 \usepackage{mathtools}
-\usepackage{algorithm,algorithmicx,algpseudocode}
+\usepackage{algorithm,algorithmicx,algpseudocode,amssymb,amsthm}
 \usepackage{verbatim}
+\usepackage{lmodern}
 
 \usepackage{microtype}
 \usepackage[colorlinks=false, pdfborder={0 0 0}]{hyperref}
 \usepackage[all]{hypcap}
 \usepackage{todonotes}
+\usepackage{marginfix}
 
 \usepackage{cleveref}
 
-\usetikzlibrary{external} 
+\usetikzlibrary{external}
 \tikzexternalize[prefix=tikzPictures/]
 
 % used with the assignemnt template
@@ -39,3 +43,5 @@
 \makeatletter
 \renewcommand{\todo}[2][]{\tikzexternaldisable\@todo[#1]{#2}\tikzexternalenable}
 \makeatother
+
+\newtheorem{theorem}{Theorem}

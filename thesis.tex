@@ -1,6 +1,7 @@
+\RequirePackage{fixltx2e}
 \RequirePackage[l2tabu, orthodox]{nag}
 
-\documentclass{report}
+\documentclass[article]{memoir}
 
 \input{header.tex}
 \input{Qcircuit.tex}
@@ -33,10 +34,9 @@
 \setcounter{tocdepth}{1}
 \tableofcontents
 
-\chapter{Introduction}
 
 %----------------------------------------------------------------------------------------------------
-
+\include{intro}
 \include{memory}
 \include{arithmetic}
 \include{jcc}
