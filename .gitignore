@@ -11,3 +11,5 @@ thesis.toc
 *.auxlock
 *.swp
 *.pdf
+*.out
+*.toc

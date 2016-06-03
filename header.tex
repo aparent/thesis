@@ -11,18 +11,14 @@
 
 \usepackage{mathtools}
 \usepackage{algorithm,algorithmicx,algpseudocode,amssymb,amsthm}
+\usepackage{nicefrac}
 \usepackage{verbatim}
 \usepackage{lmodern}
 
 \usepackage{microtype}
-\usepackage[colorlinks=false, pdfborder={0 0 0}]{hyperref}
-\usepackage[all]{hypcap}
-\usepackage{todonotes}
-\usepackage{marginfix}
+\usepackage[ textsize=tiny, textwidth=2.2cm, shadow]{todonotes}
 
-\usepackage{cleveref}
-
-\usetikzlibrary{external}
+\usetikzlibrary{external,positioning,calc}
 \tikzexternalize[prefix=tikzPictures/]
 
 % used with the assignemnt template
@@ -37,6 +33,11 @@
 \newcommand{\bra}[1]{{\left\langle{#1}\right\vert}} % for Dirac kets
 \newcommand{\braket}[2]{{\left\langle #1 \vphantom{#2} \right\vert\left.\!\! #2 \vphantom{#1} \right\rangle}} % for Dirac brackets
 
+\renewcommand{\natural}{\mathbb{N}}
+\newcommand{\complex}{\mathbb{C}}
+\newcommand{\real}{\mathbb{R}}
+
+
 \let\underdot=\d % rename builtin command \d{} to \underdot{}
 \renewcommand{\d}[2]{\frac{d #1}{d #2}} % for derivatives
 
@@ -45,3 +46,15 @@
 \makeatother
 
 \newtheorem{theorem}{Theorem}
+
+\newcommand{\cites}[1]{{\color{red}XXXX #1 citation needed XXX}} % Missing citations
+
+\newfloat{program}{ht}{lop}
+
+\pgfplotsset{
+    axis x line=bottom,
+    axis y line=left,
+    every outer x axis line/.append style={-stealth,gray},
+    every outer y axis line/.append style={-stealth,gray},
+    every axis legend/.append style={draw=none},
+}

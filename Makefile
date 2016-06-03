@@ -3,15 +3,17 @@ diagrams-svg = $(patsubst %.svg, %.pdf, $(wildcard images/*.svg))
 
 diagrams = $(diagrams-jcc-examples) $(diagrams-svg)
 
-.PHONY: thesis
+tex-files = memory.tex arithmetic.tex intro.tex jcc.tex header.tex
 
-all: thesis
+.PHONY: uw-ethesis
 
-thesis: $(diagrams) data/plot-data
-	pdflatex -shell-escape -draftmode thesis.tex
-	bibtex thesis.aux
-	pdflatex -shell-escape -draftmode thesis.tex
-	pdflatex -shell-escape thesis.tex
+all: uw-ethesis
+
+clean:
+	latexmk -C
+
+uw-ethesis: uw-ethesis.tex uw-ethesis-frontpgs.tex $(tex-files) $(diagrams) data/plot-data
+	latexmk -pdf -pvc -pdflatex="pdflatex -interaction=nonstopmode -shell-escape" uw-ethesis.tex
 
 images/%.svg: jcc-examples/%.j
 	jcc $^ -O -d $@

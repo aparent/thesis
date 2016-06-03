@@ -1,13 +1,18 @@
 \chapter{Arithmetic}
 
 A library of efficient commonly used arithmetic functions is needed for
-efficient circuit generation.  Further it is useful to have in-place functions
-whenever possible.
+efficient circuit generation. And especially useful for implementing a basic set
+of built in function in a reversible compiler.
+
+Further it is useful to have in-place functions whenever possible due to the
+improved efficiency provided by reversible mutation in MDD based cleanup.
 
 \section{Addition}
 
-  An addition circuit is a circuit which takes two $n$ bit integers $a =
-  a_1a_2\dotsc a_n$ and $b = b_1b_2\dotsc b_n$ and returns the sum $a+b$.
+  An addition circuit is a circuit which takes two $n$ bit integers $\mathbf{a} =
+  a_1a_2\dotsc a_n$ and $\mathbf{b} = b_1b_2\dotsc b_n$ and returns the sum
+  $\mathbf{a}+\mathbf{b}$. The operation $(a,b)\mapsto (a,a+b)$ is injective so
+  it is expected that an addition circuit which is in-place on one input exists.
 
   \subsection{Classic Ripple}
 
@@ -27,13 +32,13 @@ whenever possible.
 
     \Cref{fig:classicalFA} shows an irreversible implmentation.
 
-    \begin{marginfigure}
+    \begin{figure}
         \capstart
         \centering
-        \includegraphics[width=\hsize]{images/classicalFA.pdf}
+        \includegraphics[width=0.5\textwidth]{images/classicalFA.pdf}
         \caption{Irreversible full adder}
         \label{fig:classicalFA}
-    \end{marginfigure}
+    \end{figure}
     In the reversible case a circuit (see figure~\ref{fig:reversibleFA}) can be constructed that preforms the mapping:
     \[
         (a,b,c,0) \mapsto (a,b,a\oplus b\oplus c,ab\oplus ac \oplus bc)
@@ -60,7 +65,7 @@ whenever possible.
     In that case it would save space to overwrite the value.
     To do this we could try to construct adder which maps inputs $(a,b)\mapsto(a,a+b)$.
 
-    Such an adder is described in Cuccaro et al.\cite{CDKM:2004} (Note that not all the optimizations described in the original paper are desirable with our gate set as we wish to maximize shared controls).
+    Such an adder is described in \cite{CDKM:2004} (Note that not all the optimizations described in the original paper are desirable with our gate set as we wish to maximize shared controls).
     It is very similar to the classic ripple.
     The main improvement is the realization that information about the carry could be stored in one of the input bits of each column.
     This allows it to overwrite one of it's inputs with the resulting sum.
@@ -116,6 +121,7 @@ whenever possible.
         A^{ctrl}_n = 4n+1
       \end{align}
 
+      \todo{Discuss the carry lookahead adder here \cite{draper04}.}
 
 \section{Multiplication}
   \subsection{Controlled Addition Multiplier}
@@ -139,10 +145,10 @@ whenever possible.
       Where $M_n$ is the gate count for a controlled addition based multiplication circuit of size $n$.
       From \eqref{eq:cadd} we know the controlled addition circuit uses $4n+1$ Toffoli gates this gives a full count:
       \begin{align} \label{eq:caddtoff}
-        M_n = 4n^2 -2n -1
+        M_n = 4n^2 - 2n -1
       \end{align}
 
-\subsection{Quantum Karatsuba}
+\subsection{Reversible Karatsuba}
     The following reversible algorithm for Karatsuba improves upon previous work\cite{PF:2006}.
     It does then primary by using in place addition to minimize garbage growth at each level.
     It also attempts to choose optimal splits instead of dividing the number in half at each step,
@@ -190,7 +196,7 @@ whenever possible.
             &= 2n^{\log_2 3} + 48n \left(\frac{1- (3/2)^{\log_2 n}}{1-3/2}\right) \notag\\
             &= 2n^{\log_2 3} + 96n \left((3/2)^{\log_2{n}} -1\right) \leq 98 n^{\log_2{3}}
       \end{align}
-      This bound can be improved by replacing the recursive call to Karatsuba with an instance of some naive multiplication once a certain cutoff has been reached.
+      This bound can be improved by replacing the recursive call to Karatsuba with naive multiplication once a certain cutoff has been reached.
       Looking at \cref{fig:cutoff} we see a comparison of various cutoff values (the naive method is also plotted for reference).
 
       Another way to improve this algorithm is to attempt to choose more intelligent splits rather then always splitting the inputs in half at each level.
@@ -214,6 +220,8 @@ whenever possible.
 
    \subsubsection{Time-Space Tradeoffs}
      We see in \cref{fig:cutoff,fig:size} that there are trade-offs available between circuits size and gate count available by changing the cutoff value.
+     A higher cuttoff value value results in a larger naive multiplication
+     circuits which are much more space efficient.
   \subsection{Comparison of Multipliers}
     \subsubsection{Gate Count}
       The Karatsuba multiplier has the lowest asymptotic gate count of the circuits discussed.
@@ -224,7 +232,6 @@ whenever possible.
                  The Legend shows the implementation (skara for the simple version and aKara for the adaptive cutoff) as well as a number indicating the cutoff size. }
         \label{fig:cutoff}
       \end{figure}
-
 
     \subsubsection{Space Used}
       The naive implementation uses the lowest number of input bits using only a single ancilla.
@@ -245,8 +252,16 @@ whenever possible.
       The Wallace tree achieves the best asymptotic depth.
 
 \section{Division}
-  \subsection{Simple binary integer division}
-    In figure XXX is a simple integer division circuit based on the binary form of long division as outlined in algorithm \ref{algo:intdiv}.
+  \subsection{Binary integer division}
+    \begin{figure}
+      \capstart
+      \centering
+      \includegraphics[width=0.5\textwidth]{images/division}
+      \caption{Binary Division Circuit.}
+      \label{fig:div}
+     \end{figure}
+  In \cref{fig:div} is a simple integer division circuit based on the binary
+  form of long division as outlined in \cref{algo:intdiv}.
     \begin{program}
       \capstart
       \caption{Integer Division with Remainder: find $R$ and $Q$ for $N/D$}
@@ -260,7 +275,6 @@ whenever possible.
           \If{$R \geq D$} \label{line:intdiv:compare}
             \State $R\gets R - D$
             \State $Q(i) \gets 1$ \label{line:intdiv:setQ}
-
           \EndIf
         \EndFor
       \end{algorithmic}
@@ -270,11 +284,10 @@ whenever possible.
 
     On \cref{line:intdiv:setToN} instead of allocating new space for $R(0)$ we can just use $N(i)$ as $R(0)$ since it will not be used again in the algorithm.
     In doing this we will overwrite the value of $N$ with $R$ as the algorithm is run.
-    The if statement on \Cref{line:intdiv:compare} can be preformed with a comparison circuit.
+    The if statement on \cref{line:intdiv:compare} can be preformed with a comparison circuit.
     The result bit can be used to control the subtraction $R-D$.
-    The value of the result bit is the same as $Q(i)$ after the assignment on \ref{line:intdiv:setQ}, so $Q(i)$ can just be taken to be the result bit.
+    The value of the result bit is the same as $Q(i)$ after the assignment on \cref{line:intdiv:setQ}, so $Q(i)$ can just be taken to be the result bit.
     This avoids additional ancilla and the assignment to $Q(i)$.
-
 
 \section{Trigonometric functions}
     \subsection{CORDIC}
@@ -335,7 +348,7 @@ whenever possible.
             At the end the copied out set of bits $\sigma$ determine the directions of rotation.
             $\theta$ will approach zero so the higher order bits could possibly be cleaned up at the end of the step.
             Figure \ref{fig:CORDICDirections} shows a circuit for calculating $\sigma$.
-            \begin{figure}[p]
+            \begin{figure}
                 \capstart
                 \centering
                 \includegraphics[width=\textwidth]{images/CORDICDirections}
@@ -347,7 +360,7 @@ whenever possible.
             The actual rotation section is done using the iterative process above (\cref{eq:cordIter}).
 
             This circuit is shown in \cref{fig:CORDICRotations}.
-            \begin{figure}[p]
+            \begin{figure}
                 \capstart
                 \centering
                 \includegraphics[width=\textwidth]{images/CORDICRotations}
@@ -456,7 +469,7 @@ This algorithm has been implemented and tested on the BLIF benchmarks. \todo{add
 The results are shown below:
 \todo{chart}
 
-\section{Find First\label{sec:findFirst}}
+\section{Gray Code Controlled Counter\label{sec:findFirst}}
   Suppose you want to preform a set of functions which return some boolean value and you wish to know the first such function which returns $0$.
   For example if we have an $n$-bit number and we wish to find the position of the first $0$ value.
 
