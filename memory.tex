@@ -1,6 +1,6 @@
 \chapter{Memory Management}
 
-Memory management is import when compiling a program to be run in a resource
+Memory management is important when compiling a program to be run in a resource
 constrained environment. It is a topic of great interest in program compilation
 in general. The problem is however simpler in the case of irreversible
 languages. Once it is determined that some data is no longer needed it can
@@ -8,10 +8,9 @@ simply be deleted and reallocated as needed.
 
 In a reversible computation memory management is somewhat complicated by the
 reversibility constraint since a bit cannot be simply set to zero and reused
-when it is no longer needed.
-
-Thankfully since we are working in the circuit model determining if data is
-needed in the future is simple (and computable!).
+when it is no longer needed. The exact nature of the difference between the
+reversible and irreversible memory models is perhaps made most clear by the
+rules of the black and reversible pebble games discussed below.
 
 \section{Overview of Existing Approaches}
 
@@ -35,6 +34,12 @@ place to the left hand side value, and then cleaned up using Bennett if
 necessary. This means that memory need only be allocated temporarily for each
 modification statement.
 
+For example say we wish to evaluate the statement \verb|b+=a*c|. First
+\verb|a*c| is computed by using additional ancilla as needed. The result is
+then reversibly added to \verb|b| (using the function $(a,b)\mapsto(a,a+b)$
+discussed previously). Finally the circuit for \verb|a*c| can be reversed in
+order to clean up any allocated ancilla.
+
 \paragraph{If conditions} require a pre-condition (used to choose which branch
 to take), and a post-condition (true if and only if the top branch is taken).
 These are very useful in the context of memory management. The pre-condition can
@@ -44,7 +49,7 @@ be true after the loop is preformed.
 
 \todo{add diagram}
 
-\subsection{Pebble Games and Garbage Collection}
+\subsection{Pebble Games and Static Garbage Collection}
 
 Any computation where where execution is independent of input can be modeled as
 a DAG. The nodes on the graph represent values and the arrow represent data
@@ -150,17 +155,17 @@ PSPACE-completeness (\cite{chan13}) of solving the reversible pebble game since
 any graph which does not include mutation edges is played by the rules of the
 reversible pebble game.
 
-As a simple example of the usefulness of such a game consider the computation of
-$a+b+c$. In \cref{fig:mddExample} the reversible pebble graph as well as the MDD
-are given. If the inputs ($a$,$b$,$c$) are considered to be pebbled then two
-additional stones to pebble $a+b+c$ in the reversible pebble game. The first is
-placed on $a+b$ and the second can then be placed on $a+b+c$. The MDD game on
-the other hand needs only a single additional stone. In this case the stone will
-be placed will to be placed on $a+b$ then slid along the modification path to
-$a+b+c$.
+As a simple example of the usefulness of such a game consider the computation
+of $a+b+c$. In \cref{fig:mddExample} the reversible pebble graph as well as the
+MDD are given. If the inputs ($a$,$b$,$c$) are considered to be pebbled then
+two additional stones to pebble $a+b+c$ in the reversible pebble game. The
+first is placed on $a+b$ and the second can then be placed on $a+b+c$. The MDD
+game on the other hand needs only a single additional stone. In this case it is
+clear that the $b$ stone can be slid along the modification path to $a+b$ then
+further slid along to $a+b+c$. So it is possible to use two fewer stones (no
+additional stones beyond the inputs) in the case of the MDD game.
 
 \begin{figure}
-  %\includegraphics[width=\textwidth]{images/pebExamples.tikz}
   \centering
   \begin{subfigure}{0.3\textwidth}
     \includegraphics{images/revPeb.tikz}
@@ -172,7 +177,8 @@ $a+b+c$.
     \caption{MDD}
   \end{subfigure}
   \label{fig:mddExample}
-  \caption{The reversible pebble game and MDD for $a+b+c$}
+  \caption{The reversible pebble game and MDD for $a+b+c$. Mutation edges are
+  represented with sold lines while normal dependency edges used a dashed line.}
 \end{figure}
 
 
@@ -220,8 +226,8 @@ from $a$.
 
 \subsection{Computing the Cost of a Strategy}
 
-In order to compute the cost of a given strategy when it is applied a few
-new rules are needed:
+In order to compute the cost of a given strategy a few additional rules are
+needed:
 
 \begin{enumerate}
     \setcounter{enumi}{3}
@@ -319,7 +325,7 @@ point into $P_{k+1}$ and none points backward. Now, consider all nodes in $P_1,
 \ldots, P_k$ that would have to be available in order to move $v$ one step
 backward. By induction, starting with $P_k$, we can slide the states for each
 path into the location that is needed to make this information available for $v$
-to move backward one step. Repeating this argument, we see that we can move the
+to move backward one step. Repeating this argument, we see that dependency S the
 state anywhere along the last path $P_{k+1}$ thereby showing that cleanup is
 possible and algorithm \textsc{Eager} will find this cleanup strategy.
 
@@ -333,6 +339,18 @@ path depends on previous values of the blue path in order to be cleaned.
 It is still possible to clean up the blue node. A method for doing this is
 somewhat related to the \emph{incremental strategy} discussed above generalized
 to a DAG.
+
+In this strategy we start adding filling in pebbles working toward the final
+pebble. After we have placed a certain number of pebbles (up to some space
+limit we are trying to achieve), we stop and find the set of the currently
+pebbled nodes that are dependencies of future nodes. We then create a
+'checkpoint' removing all nodes except the ones in this set by reversing the
+computation.  Using the newly freed up pebbles the computation can be
+continued.  If we run out of pebbles again we can create a new checkpoint and
+remove all pebbles up to the previous one and so on.
+
+Note that it is helpful to choose checkpoint locations where the set of nodes
+with future dependencies is small.
 
 \subsection{Circuit Generation}
 Circuit generation is defined by creating a generation function for each
@@ -361,13 +379,39 @@ minimized.
 \todo{prove, under some assumptions, that this procedure constructs a circuit
         computing the same function as the MDD }
 
-\subsection{Example: SHA-256}
+\subsection{Example: SHA-256 Round}
 
-Larger scale example of compilation with MDD can be see in SHA.
-\todo{The main goal in this example is to show that SHA can be automatically
-  compiled to use no additional ancilla per round. This can also be done using
-  the Janus modification operator scheme on it's own so it may nice to show
-another example where that fails.}
+A simple statement of the computation done in one round of SHA-256 is given in
+\cref{alg:sha2}. A direct translation of this algorithm into an MDD is given in
+\cref{fig:sha-MDD}. It can be seen from the MDD that the computed temporary
+values (Maj, Ch, $\Sigma_0$,$\Sigma_1$) all have one way dependencies and
+depend only on unmodified input values. The can therefore be cleaned up
+directly after they are used using the eager cleanup scheme. The resulting
+circuit is shown in \cref{fig:sha}.
+
+\begin{algorithm}[H]
+\caption{SHA-256}
+\label{alg:sha2}
+\begin{algorithmic}
+  \FOR{i=0 \TO 63}
+    \STATE \hspace*{1em} $\Sigma_1 = (\mathbf{E} \ggg 6) \oplus (\mathbf{E} \ggg 11) \oplus  (\mathbf{E} \ggg 25)$
+    \STATE \hspace*{1em} $\mathbf{Ch} = (\mathbf{E} \land \mathbf{F}) \oplus ( \neg\mathbf{E}\land \mathbf{G})$
+    \STATE \hspace*{1em} $\Sigma_0 = (\mathbf{A} \ggg 2) \oplus (\mathbf{A} \ggg 13) \oplus (\mathbf{A} \ggg 22)$
+    \STATE \hspace*{1em} $\text{Maj} = (\mathbf{A} \land \mathbf{B}) \oplus (\mathbf{A} \land \mathbf{C}) \oplus (\mathbf{B}\land\mathbf{C})$
+    \STATE \hspace*{1em} $\mathbf{H} \pluseq \Sigma_1 + \mathbf{Ch} + \mathbf{K}[i] + \mathbf{W}[i]$
+    \STATE \hspace*{1em} $\mathbf{D} \pluseq \mathbf{H}$
+    \STATE \hspace*{1em} $\mathbf{H} \pluseq \Sigma_0 + \text{Maj}$
+  \ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+\begin{figure}[ht]
+      \capstart
+      \centering
+      \includegraphics[width=0.9\hsize]{images/sha_MDD}
+      \caption{MDD for one round of SHA-256}
+      \label{fig:sha-MDD}
+\end{figure}
 
 \begin{figure}[ht]
       \capstart
@@ -376,4 +420,11 @@ another example where that fails.}
       \caption{One Round of SHA-256}
       \label{fig:sha}
 \end{figure}
+
+\section{Discussion and Open Problems} 
+
+A some general heuristic methods for playing the pebble game on a general DAG
+were presented. It is likely that there exist efficiently computable methods
+with better time and/or space performance. 
+
 

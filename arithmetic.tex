@@ -149,10 +149,16 @@ improved efficiency provided by reversible mutation in MDD based cleanup.
       \end{align}
 
 \subsection{Reversible Karatsuba}
-    The following reversible algorithm for Karatsuba improves upon previous work\cite{PF:2006}.
-    It does then primary by using in place addition to minimize garbage growth at each level.
-    It also attempts to choose optimal splits instead of dividing the number in half at each step,
-    This is helpful when the integer size is not a power of 2.
+
+    The following reversible algorithm for Karatsuba improves upon previous
+    work\cite{PF:2006}.  It does then primary by using in place addition to
+    minimize garbage growth at each level.  It also attempts to choose optimal
+    splits instead of dividing the number in half at each step, This is helpful
+    when the integer size is not a power of 2.
+
+    Further an asymptotic improvement is space use (yielding as well an
+    asymptotic improvement in the space-time product), is shown by using pebble
+    games in the analysis. 
 
     Let $n\geq 1$ and let $x$ and $y$ be $n$-bit integers.
     The well-known Karatsuba\cite{KO:1963} algorithm is based on the observation that by writing $x=x_1 2^{\lceil n/2\rceil}+x_0$ and $y=y_1 2^{\lceil n/2\rceil }+y_0$ the product $xy$ can be evaluated as $xy=2^n A + 2^{\rceil n/2 \rceil} B + C$, where
@@ -219,12 +225,24 @@ improved efficiency provided by reversible mutation in MDD based cleanup.
      \end{figure}
 
    \subsubsection{Time-Space Tradeoffs}
-     We see in \cref{fig:cutoff,fig:size} that there are trade-offs available between circuits size and gate count available by changing the cutoff value.
-     A higher cuttoff value value results in a larger naive multiplication
-     circuits which are much more space efficient.
-  \subsection{Comparison of Multipliers}
-    \subsubsection{Gate Count}
-      The Karatsuba multiplier has the lowest asymptotic gate count of the circuits discussed.
+
+     We see in \cref{fig:cutoff,fig:size} that there are trade-offs available
+     between circuits size and gate count available by changing the cutoff
+     value.  A higher cuttoff value value results in a larger naive
+     multiplication circuits which are much more space efficient.
+
+     The reversible pebble game may be used to gain an asymptotic improvement
+     in the space required to implement this algorithm. Note the tree structure
+     of the recursive dependencies shown in \cref{fig:kara-mdd}. 
+
+      \begin{figure}[p]
+        \capstart
+        \centering
+        \includegraphics[width=0.7\textwidth]{images/kara-mdd}
+        \caption{Structure of a pebble game for implementing the Karatsuba circuit. Note that $K_n$ can be implemented using $n/2+1$ ancilla}
+        \label{fig:kara-mdd}
+      \end{figure}
+
      \begin{figure}[p]
         \capstart
         \includegraphics[width=\textwidth,height=0.4\textheight]{images/cutoff.tikz}
@@ -233,8 +251,6 @@ improved efficiency provided by reversible mutation in MDD based cleanup.
         \label{fig:cutoff}
       \end{figure}
 
-    \subsubsection{Space Used}
-      The naive implementation uses the lowest number of input bits using only a single ancilla.
       \begin{figure}[p]
         \capstart
         \includegraphics[width=\textwidth,height=0.4\textheight]{images/karaSize.tikz}
@@ -247,9 +263,6 @@ improved efficiency provided by reversible mutation in MDD based cleanup.
         \caption{Plot of Toffoli depth verses input size for various Karatsuba cutoffs}
         \label{fig:depth}
       \end{figure}
-
-    \subsubsection{Depth}
-      The Wallace tree achieves the best asymptotic depth.
 
 \section{Division}
   \subsection{Binary integer division}
@@ -291,11 +304,17 @@ improved efficiency provided by reversible mutation in MDD based cleanup.
 
 \section{Trigonometric functions}
     \subsection{CORDIC}
-        The basic idea of the CORDIC\cite{V:1959} algorithm is to apply repeated rotations which converge on a desired value.
+
+	The basic idea of the CORDIC\cite{V:1959} algorithm is to apply
+	repeated rotations which converge on a desired value.
+
         \[ \theta = \alpha_0 + \alpha_1 + \dotsb + \alpha_{n-1} \]
-        The issue is that computing rotations is generally expensive;
-        requiring multiplications and the evaluation of trig functions (the very thing we are using it to accomplish!).
-        These rotation angles will be chosen such that this problem is avoided.
+
+	The issue is that computing rotations is generally expensive; requiring
+	multiplication and the evaluation of trig functions (the very thing we
+	are using it to accomplish!). An important realization of the CORDIC
+	method is that it is possible to choose rotation angles such that this
+	problem is avoided.
 
         A rotation matrix is given by:
         \[
@@ -304,7 +323,7 @@ improved efficiency provided by reversible mutation in MDD based cleanup.
             \sin\gamma_i & \cos\gamma_i
           \end{bmatrix}
         \]
-        Using trig identities we can simplify this to
+        Using trig identities we can simplify this to:
         \[
           R_i = K_i
                 \begin{bmatrix}
@@ -314,7 +333,7 @@ improved efficiency provided by reversible mutation in MDD based cleanup.
         \]
         Where $K_i = \frac{1}{\sqrt{1+\tan^2\gamma_i}}$.
 
-        We can collect all the $K_i$ terms into a single pre-computed scaling factor:
+        We can collect all the $K_i$ terms into a pre-computed scaling factor:
         \[ K(n) = \prod_{i=0}^{n-1}K_i \]
         This can be applied with a single multiplication after the computation is complete.
 

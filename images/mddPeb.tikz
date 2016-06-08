@@ -3,7 +3,7 @@
       \node[] (b) [right = of a] {$b$};
       \node[] (c) [right = of b] {$c$};
       \node[] (ab) [above = of {$(a)!0.5!(b)$}] {$a+b$} edge [<-,dashed] (a)
-                                                        edge [<-,dashed] (b);
+                                                        edge [<-] (b);
       \node[] (abc) [above = 2cm of {$(b)!0.5!(c)$}] {$a+b+c$} edge [<-] (ab)
                                                                edge [<-,dashed] (c) ;
 \end{tikzpicture}
