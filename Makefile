@@ -13,7 +13,8 @@ clean:
 	latexmk -C
 
 uw-ethesis: uw-ethesis.tex uw-ethesis-frontpgs.tex $(tex-files) $(diagrams) data/plot-data
-	latexmk -pdf -pvc -pdflatex="pdflatex -interaction=nonstopmode -shell-escape" uw-ethesis.tex
+	latexmk -pdf -pdflatex="pdflatex -shell-escape" uw-ethesis.tex
+	gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dNOPAUSE -dQUIET -dBATCH -sOutputFile=thesis.pdf uw-ethesis.pdf
 
 images/%.svg: jcc-examples/%.j
 	jcc $^ -O -d $@

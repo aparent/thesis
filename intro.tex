@@ -2,19 +2,10 @@
 
 The goal of this thesis is to describe a framework for the efficient
 compilation of high-level programs into low level circuits. Also discussed will
-be the use of pebble games in the optimization of reversible circuits.
-
-\section{Reversible Computation}
-
-When preforming computations information is regularly discarded. Actions such
-as overwriting data cause many states to be mapped to one so even if one had
-knowledge of the actions involved in a computation it may not be possible to
-recover the initial state. These types of computations are therefore called
-irreversible.
-
-A reversible computation is a computation which preforms a 1-to-1 mapping
-between states. In \cite{Bennett:73} Bennett showed that in principle any
-computation could be made reversible (with a potentially large space overhead).
+be the use of pebble games in the optimization of reversible circuits.  A
+modification to the reversible pebble game which allows for better optimization
+of circuits is presented and the use of this representation as a compiler
+intermediate is discussed.
 
 \section{Landauer's principle}
 
@@ -32,21 +23,44 @@ operation is called the Landauer limit ($kT\ln 2$).
 Reversible computing shows that it is in principle possible to avoid this cost
 by ensuring that no information is erased by the computation.
 
-\section{Reversible Circuits}
+\section{Reversible Computation}
+
+Normally when preforming computations information is discarded. Actions such as
+overwriting and clearing memory cause many states to be mapped to a single
+state. So even if one had knowledge of the operations involved in a computation it
+may not be possible to recover the initial state. These types of computations
+are therefore called irreversible.
+
+A computation is called reversible if any state can be traced uniquely forwards
+and backwards in time, or equivalently if each step in the computation
+implements a bijective function. In \cite{Bennett:73} Bennett showed that in
+principle any computation could be made reversible (with a potentially large
+space overhead).
+
+Reversible computing is relevant in the context of quantum computation since
+all quantum operations are required to be unitary which in the classical domain
+is equivalent to reversible. Efficient generation of quantum circuits is
+important since in many quantum algorithms the cost of implementing a
+reversible oracle dominates\todo{cite some evidence of this}.
 
 Due to the focus on generation of circuits for use in quantum computation we
 focus on the circuit model. The primary feature of the circuit model that makes
-in useful in this setting is the fact that all operations are applied
+it useful in this setting is the fact that all operations are applied
 unconditionally. This is important in the case of a quantum computer with
-classical control since in order for  the classical part to make decisions about
-which operations to apply which are dependent on data a measurement has to be made.
+classical control since in order for  the classical part to make decisions
+about which operations to apply which are dependent on data a measurement has
+to be made.  This means that if the entire computation is to be preformed in
+superposition we must work in the circuit model.
 
 Consider a classical computation where we have inputs $a$, and $b$ and wish to
 know the output $a\land b$.  The classical AND gate computes $(a,b)\mapsto
-(a\land b)$, discarding the values of $a$ and $b$.  Since this function is not
+(a\land b)$, discarding the values of $a$ and $b$.   Since this function is not
 injective (ex. $0\land 0 = 0$ and $1 \land 0 = 0$) it is not reversible.
+Similarly the fanout gate $a\mapsto (a,a)$ is also not considered reversible.
+This is because it is not backwards deterministic on all inputs; for example
+given an input $(0,1)$ the reverse fanout gate has no defined output. 
 
-One way to make it reversible is to instead use the injective function
+One way to make a reversible AND operation is to instead use the injective function
 $(a,b,c) \mapsto (a,b,a\land b \oplus c)$. This is called the ``Toffoli Gate''.
 (If $c$ is initialized to zero we have $(a,b,0) \mapsto (a,b,a\land b)$).
 
@@ -57,6 +71,18 @@ final result is copied out to newly allocated set of bits and the entire circuit
 is repeated in reverse. So given an irreversible function $f(x)$ (where $f(x)$
 is of size $n$) we can use the Bennett method to generate a reversible function
 $(x,0^{n+m}) \mapsto (x,f(x),0^m)$.
+
+The standard reversible gate set which will be used includes the following gates:
+
+\begin{align*}
+	&\text{Not:} (a,b) \mapsto (\neg a) \\
+	&\text{Cnot:} (a,b) \mapsto (a,a\oplus b) \\
+        &\text{Toffoli:} (a,b,c) \mapsto (a,b,ab\oplus c) \\
+	&\text{Swap:} (a,b) \mapsto (b,a) \\
+	&\text{Fredkin:} (a,b,c) \mapsto (a,\neg a b \oplus ac, ab\oplus \neg a c)
+\end{align*}
+
+Note another way of describing the Fredkin gate is as swap on b and c controlled on the value of a.
 
 
 \section{Quantum Circuits}

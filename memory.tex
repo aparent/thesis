@@ -1,4 +1,4 @@
-\chapter{Memory Management}
+\chapter{Memory Management and Pebble Games}
 
 Memory management is important when compiling a program to be run in a resource
 constrained environment. It is a topic of great interest in program compilation
@@ -12,12 +12,21 @@ when it is no longer needed. The exact nature of the difference between the
 reversible and irreversible memory models is perhaps made most clear by the
 rules of the black and reversible pebble games discussed below.
 
+In this section a representation for reversible computation (MDD) is presented.
+This representation contains all necessary information about the structure of
+the computation that is required for the compiler to preform automated
+space-time optimizations using pebble games. It is proposed as an
+intermediate representation to be used when compiling high level programming
+languages to reversible circuits. 
+Such a representation is useful not only in the context of compilation but also in the analysis of circuits.
+
 \section{Overview of Existing Approaches}
 
-\subsection{Janus}
-Janus\cite{YG:2007,LD:1982} is a reversible programming
-language.  It's main focus is not to be a circuit description language, but to
-be logically reversible. As a result of logical reversibility it does however have some
+\subsection{Janus} 
+
+Janus\cite{YG:2007,LD:1982} is a reversible programming language.  It's main
+focus is not to be a circuit description language, but to be logically
+reversible. As a result of logical reversibility it does however have some
 useful properties which help when compiling to circuits.
 
 Janus guarantees that all programs implemented in it are reversible.
@@ -28,7 +37,7 @@ this ancilla can be cleaned up between statements.
 
 \paragraph{Modification operators} are used for operations that can be done
 in-place. For example the addition modification operator, \verb|+=|. Operations
-that cannot be done in place can only occur to the right of an in place
+that cannot be done in place can only occur to the right of a modification
 operator. These operations can then be implemented, the result can be applied in
 place to the left hand side value, and then cleaned up using Bennett if
 necessary. This means that memory need only be allocated temporarily for each
@@ -49,11 +58,13 @@ be true after the loop is preformed.
 
 \todo{add diagram}
 
-\subsection{Pebble Games and Static Garbage Collection}
+\subsection{Pebble Games}
 
 Any computation where where execution is independent of input can be modeled as
-a DAG. The nodes on the graph represent values and the arrow represent data
-dependencies required for the computation of those values.
+a DAG. This graph is sometimes called a \emph{Functional-dependence} network.
+The nodes on the graph are associated with functions and the arrow represent
+data dependencies required for the computation of those functions. These graphs
+are loop free by construction assuming no circular dependencies.
 
 The \emph{Black Pebble Game} is a game played a DAG which is used to model
 irreversible memory. The rules are as follows:
@@ -68,15 +79,23 @@ example if we take some computation and model it as a DAG we can try and find
 the minimum number of pebbles needed to compute some value in the graph. This
 minimum corresponds to the minimal space cost of that computation.
 
+To model a computation as a DAG draw nodes representing a single register state
+in the computation.  These nodes are then connected based on data dependencies.
+Any computation which is valid (does note contain circular dependencies) will
+form a DAG using this procedure.
+
 \subsubsection{Reversible Pebble Game}
 
 Bennett\cite{Bennett:89} describes an alternative pebble game for reversible
 computation. The rules are similar to those used in the \emph{black pebble
 game} except that the reversibility constraint prevents us from simply removing
 pebbles. Each computation has a corresponding reverse computation, and the
-dependencies of the reverse computation are the same as forward computation.
-This means that pebbles may sill be removed but removal is subject to the same
-conditions as placement. The rules for this version of the game are given below:
+dependencies of the reverse computation are the same as the corresponding
+forward computation. This means that pebbles may still be removed, but removal
+is subject to the same conditions as placement. In other words we make
+placement and removal of pebbles symmetric similarly to the way forward and
+reverse computation are made symmetric in reversible computing.  The rules for
+this version of the game are given below:
 
 \begin{enumerate}
 
@@ -88,48 +107,86 @@ conditions as placement. The rules for this version of the game are given below:
 
 \end{enumerate}
 
-The space complexity of the game is given by the maximum number of pebbles which
+The space complexity of a game is given by the maximum number of pebbles which
 are in play at any given time. It has been shown that in general computing the
-space complexity for an arbitrary DAG is PSPACE-complete \cite{chan13}.
+\emph{pebble number} (the minimum number of pebbles, over all possible games,
+required to the final target pebble) for an arbitrary DAG is PSPACE-complete
+\cite{chan13}.
 
 Strategies for playing these games have been analyzed in the case of, one
-dimensional directed graphs, as well as for trees\cite{peb16}, for example
-
-There are three particular strategies of interest in the 1D case:
+dimensional directed graphs, as well as for trees\cite{peb16}.  There are three
+particular strategies of interest in the simple 1D case where all nodes have
+equal cost (\cref{fig:pebble} represents these strategies visually):
 
 The first is the naive strategy (sometimes called \emph{Bennett Method}). In
-this strategy pebbles are added one after another until the desired pebble is reached.
-All of the extra pebbles used in the computation are then removed in reverse
-order. This strategy has time complexity $2n-1$ and space complexity
-$n$.  This is the minimal time strategy in the 1D graph.
+this strategy pebbles are added one after another until the desired pebble is
+reached.  All of the extra pebbles used in the computation are then removed in
+reverse order. This strategy has time complexity $2n-1$ and space complexity
+$n$. This is the minimal time strategy in the 1D graph. The equivalent strategy
+on a general DAG might be to fill in all pebbles in topological order then
+remove all non-output pebbles in reverse order.
 
-The second is a slightly more advanced strategy which will be referred to as the
-\emph{incremental strategy}. Here we start with some limited number of pebbles
-and place pebbles until we run out. After running out we uncompute all but the
-last pebble following the Bennett strategy. This is then repeated using the next
-pebble as the new starting point until the desired pebble is reached. This
-strategy has a time complexity of $4n$ and a space complexity of
-$\frac{1}{2}n^2$. Although this strategy is not optimal in all cases it is easy
-to implement due to not requiring that the cleanup algorithm have prior
-knowledge about the size of the circuit.
+The second is a slightly more advanced strategy which will be referred to as
+the \emph{incremental strategy}. Here we start with some limited number of
+pebbles and place pebbles until we run out. After running out we uncompute all
+but the last pebble following the Bennett strategy. This is then repeated using
+the next pebble as the new starting point until the desired pebble is reached.
+This strategy has a time complexity of $O(n)$ and a space complexity of
+$O(\sqrt n)$. This means that we can can get a square root reduction in space
+in exchange for a constant multiplier on time, therefore the asymptotic
+space-time product of the circuit can be improved over the naive strategy.
+Although this strategy is not optimal in all cases it is easy to implement due
+to not requiring that the cleanup algorithm have prior knowledge about the size
+of the circuit.
 
-Finally the third is the optimal strategy (for a given space bound) from Knill \cite{knill:95}.
-\todo{Briefly explain}
+Finally the third is the optimal strategy (for a given space bound) from Knill
+\cite{knill:95}. Finding such a strategy in the general case is
+PSPACE-complete.  
+
+\todo{Briefly explain Knill}
+
+\todo{Add a section about pebble games on trees and their relationship with reversible functions.}
+
+\begin{figure}
+  \centering
+  \begin{subfigure}{0.3\textwidth}
+    \centering
+    \includegraphics{images/Pebble1.png}
+    \caption{Bennett Method}
+  \end{subfigure}
+  \begin{subfigure}{0.3\textwidth}
+    \centering
+    \includegraphics{images/Pebble2.png}
+    \caption{Incremental}
+  \end{subfigure}\begin{subfigure}{0.3\textwidth}
+    \centering
+    \includegraphics{images/Pebble3.png}
+    \caption{Knill}
+  \end{subfigure}
+  \label{fig:pebble}
+  \caption{Comparison of 1D pebble strategies. The horizontal axis represents
+  time and the vertical axis is the state of the game at a given time slice.}
+\end{figure}
 
 \section{MDD}
 
-Lacking in the original pebble game is an effective way to represent mutation.
-This is of not much consequence in the irreversible pebble game since mutation
-can be modeled as a placement followed by the removal of a dependency. In the
-reversible pebble game it is significantly more important since pebbles can
-normally only be removed predecessors are pebbled.
+In this section a new game for the optimization of reversible computation is
+presented. It is a generalization of the reversible pebble game in that any
+reversible pebble game can be represented on an MDD. 
 
-For example addition via the mapping $(a,b) \mapsto (a,a+b)$ is a reversible
-operation which does not require new space to be allocated for the result $a+b$.
-In order for strategies from the reversible pebble game to be applied to a
-circuit using this operation generically it would have to be made out of place
-by copying the $b$ input and thus losing the advantages that may have been
-gained by using an in-place operation.
+Lacking in the original pebble game is an effective way to
+represent mutation. This is of not much consequence in the irreversible pebble
+game since mutation can be modeled as a placement followed by the removal of a
+dependency. In the reversible pebble game it is significantly more important
+since pebbles can normally only be removed if predecessors are pebbled.
+
+For example addition via the mapping $(a,b) \mapsto (a,a+b)$ (implemented by an
+in-place addition circuit) is a reversible operation which does not require new
+space to be allocated for the result $a+b$.  In order for strategies from the
+reversible pebble game to be applied to a circuit using this operation
+generically it would have to be made out of place by copying the $b$ input and
+thus losing the advantages that may have been gained by using an in-place
+operation.
 
 In order to better represent in-place operations a new pebble game is proposed.
 Rules one and two are similar to the reversible pebble game. The third rule
@@ -148,12 +205,13 @@ Rules one and two are similar to the reversible pebble game. The third rule
 
 \end{enumerate}
 
-Note that since using the move described in the third rule is optional this is a
-generalization of the reversible pebble game and any strategy that can be used
-in the reversible pebble game is a valid strategy here. We also inherit the
-PSPACE-completeness (\cite{chan13}) of solving the reversible pebble game since
-any graph which does not include mutation edges is played by the rules of the
-reversible pebble game.
+Note that since using the move described in the third rule is optional this is
+a generalization of the reversible pebble game and any strategy that can be
+used in the reversible pebble game is a valid strategy here. We also inherit
+the PSPACE-completeness (\cite{chan13}) of solving the reversible pebble game
+since any graph which does not include mutation edges is played by the rules of
+the reversible pebble game. This means that in general solving an MDD must be
+at least as hard.
 
 As a simple example of the usefulness of such a game consider the computation
 of $a+b+c$. In \cref{fig:mddExample} the reversible pebble graph as well as the
@@ -163,7 +221,10 @@ first is placed on $a+b$ and the second can then be placed on $a+b+c$. The MDD
 game on the other hand needs only a single additional stone. In this case it is
 clear that the $b$ stone can be slid along the modification path to $a+b$ then
 further slid along to $a+b+c$. So it is possible to use two fewer stones (no
-additional stones beyond the inputs) in the case of the MDD game.
+additional stones beyond the inputs) in the case of the MDD game.  Not that
+since this game is a generalization of the reversible pebble game the best
+strategy for an MDD will always be equivalent to or better then the best
+strategy in the corresponding reversible pebble game.
 
 \begin{figure}
   \centering
@@ -223,6 +284,9 @@ from $a$.
 \todo{Other things that may be nice to prove, the construction of an MDD from a
       simple language show that the MDD computes the same function as the language.}
 
+\todo{Show how conversion from Janus allows for temporary variables while
+maintaining all implicit cleanup from the original language}
+
 
 \subsection{Computing the Cost of a Strategy}
 
@@ -260,15 +324,17 @@ When implementing the graph as a circuit we may preform the computations in any
 valid topological ordering. Further if there are multiple computations which
 could be next in a given ordering they can be preformed in parallel.
 
+Some heuristic strategies are discussed below.
+
 \subsection{Eager Cleanup}
 
 If a value is no longer needed in a computation it can then be checked that the
-information needed to clean it up is \emph{available}.  More precisely
-\emph{available} is defined to mean that all dependencies needed to move the
-pebble to the beginning of it's modification path currently have pebbles or have
-pebbles that can be moved into place without causing additional space to be
-used. If this is the case it can immediately be cleaned and the ancilla can be freed for
-future use in the computation.
+information needed to clean it up is \emph{available}. Available is defined to
+mean that all dependencies needed to move the pebble to the beginning of it's
+modification path currently have pebbles or have pebbles that can be moved into
+place (by sliding along mutation edges) without causing additional space to be
+used. If this is the case it can immediately be cleaned and the ancilla can be
+freed for future use in the computation.
 
 Eager cleanup is possible when all dependencies are \emph{one-way}.
 This means that once there is no path from it to any of the modification paths
@@ -287,6 +353,7 @@ of it's dependencies (as shown in \cref{fig:one-way}).
     \caption{Interdependent}
     \label{fig:interdep}
   \end{subfigure}
+  \caption{Dependency patterns which effect eager cleanup}
 \end{figure}
 
 \todo{Write algorithm out formally and adapt the below proof sketch to the neewversion}
@@ -304,30 +371,29 @@ computation.
 
 \begin{proof}
   \todo{This proof might be better with a diagram}
-Our proof is by induction on the number $k$ of mutation paths $P_1, \ldots, P_k$
-inside the MDD $G$. For the base $k=1$ there is only one mutation path, this
-path either leads to an output, in which case no cleanup is necessary, or leads
-to a node that has to be cleaned up. However, since all inputs to the path are
-still available by assumption, the output of the path, i.e., its last node, can
-simply be moved backward step by step, uncomputing each intermediate result,
-until the initial state is recovered.
 
-We strengthen the above statement by assuming that we can return the final state
-of each path $P_1, \ldots, P_k$ to an arbitrary intermediate state.  Now, we
-make the inductive step to $k+1$ paths. Recall that a node $v$ can be reversed
-if all their dependency edges pointing to $v$ point from available nodes. (nodes
-which are computable from the available data, by sliding a pebble up or down the
-mutation path\todo{formalize this definition?}). We therefore make the inductive
-step as follows: Assume that the paths $P_1, \ldots, P_{k+1}$ are arranged in
-topological order. Let the $v$ be the node holding the current state of the last
-path $P_{k+1}$, i.e., by assumption on the one-wayness of the graph, all edges
-point into $P_{k+1}$ and none points backward. Now, consider all nodes in $P_1,
-\ldots, P_k$ that would have to be available in order to move $v$ one step
-backward. By induction, starting with $P_k$, we can slide the states for each
-path into the location that is needed to make this information available for $v$
-to move backward one step. Repeating this argument, we see that dependency S the
-state anywhere along the last path $P_{k+1}$ thereby showing that cleanup is
-possible and algorithm \textsc{Eager} will find this cleanup strategy.
+Our proof is by induction. Our graph consists of a set of one-way dependent
+paths $P_1,\dotsc,P_n$ arranged in topological order. Assume that for a $P_k$ we
+can move the pebble in each path to an arbitrary position on the path.
+
+For the base $k=1$ there is only one mutation path, this path either leads to
+an output, in which case no cleanup is necessary, or leads to a node that has
+to be cleaned up. However, since all inputs to the path are still available by
+assumption, the pebble on this path may be moved up and down and may therefore
+be moved to an arbitrary position. 
+
+Now, we make the inductive step to $k+1$ paths. Recall that a pebble can be
+moved backward along a path if all their dependency edges pointing to the node
+that it occupies point from nodes which contain pebbles. We therefore make the
+inductive step as follows: by assumption on the one-wayness of the graph, all
+edges point into $P_{k+1}$ and none points backward. Now, consider all nodes in
+$P_1, \ldots, P_k$ that would have to be pebbled in order to move the pebble on
+path $P_{k+1}$ one step backward or forward. By induction, starting with $P_k$,
+we can slide the pebbles on each path into the location that is needed to move
+the pebble on $P_k$. 
+
+By repeating this we may move the pebble on $P_{k+1}$ to any location on the
+graph.
 
 \end{proof}
 
@@ -352,28 +418,41 @@ remove all pebbles up to the previous one and so on.
 Note that it is helpful to choose checkpoint locations where the set of nodes
 with future dependencies is small.
 
+Note that this strategy introduces a constant multiplier on time in exchange
+for a quadratic reduction in space in some cases. This is not necessarily the
+case for all all graphs. Later discussion in \cref{sec:kara} shows a smaller
+then quadratic space reduction in the case of a specific graph.
+
 \subsection{Circuit Generation}
-Circuit generation is defined by creating a generation function for each
-type of move allowed in the game then using that set of functions to convert a
-graph and move set into a circuit.
+
+Circuit generation is defined by creating a generation function for each type
+of move allowed in the game then using that set of functions to convert a graph
+and move set into a circuit. When using an MDD to construct a circuit additional
+information must be added to each node specifying which circuit input
+corresponds to each incoming arrow.
 
 We start with a circuit consisting of registers corresponding to the input nodes
-of the graph.
+of the graph, these are the inputs to the circuit.
 
 A heap of currently available ancilla is kept. This ensures that the
 lowest available numbered ancilla is always the one allocated so ancilla use is
 minimized.
 
 \begin{itemize}
+
     \item Place Pebble: Place circuit which computes the function at the node
-      using the nodes dependencies as input. Assign ancilla for the output of
-      the circuit from the heap.
+	    using the nodes dependencies as input. Assign ancilla for the
+	    output of the circuit from the heap.
+
     \item Remove Pebble: Place the reverse circuit for the function at the node
-      using dependencies as input, uncomputing the previously computed value.
-      Return previously assigned ancilla to the heap.
+	    using dependencies as input, uncomputing the previously computed
+	    value.  Return previously assigned ancilla to the heap (ancilla
+	    assigned when the pebble was placed).
+
     \item Slide Pebble: Place circuit which computes the function at the node
-      using the nodes dependencies as input and the bits representing the
-      current value of the node as the modified input.
+	    using the nodes dependencies as immutable input and the bits representing the
+	    current value of the node as the modified input.
+
 \end{itemize}
 
 \todo{prove, under some assumptions, that this procedure constructs a circuit
@@ -383,37 +462,46 @@ minimized.
 
 A simple statement of the computation done in one round of SHA-256 is given in
 \cref{alg:sha2}. A direct translation of this algorithm into an MDD is given in
-\cref{fig:sha-MDD}. It can be seen from the MDD that the computed temporary
-values (Maj, Ch, $\Sigma_0$,$\Sigma_1$) all have one way dependencies and
-depend only on unmodified input values. The can therefore be cleaned up
-directly after they are used using the eager cleanup scheme. The resulting
-circuit is shown in \cref{fig:sha}.
+\cref{fig:sha-MDD}.  One immediate advantage of the representation is that
+computation on the $h$ and $d$ registers may be modified rather then reassigned
+at each step. It can also be seen from the MDD that the computed temporary values
+(Maj, Ch, $\Sigma_0$,$\Sigma_1$) all have one way dependencies and depend only
+on unmodified input values. The can therefore be cleaned up directly after they
+are used using the eager cleanup scheme. The resulting circuit is shown in
+\cref{fig:sha}.
 
-\begin{algorithm}[H]
+\begin{algorithm}
 \caption{SHA-256}
 \label{alg:sha2}
 \begin{algorithmic}
-  \FOR{i=0 \TO 63}
-    \STATE \hspace*{1em} $\Sigma_1 = (\mathbf{E} \ggg 6) \oplus (\mathbf{E} \ggg 11) \oplus  (\mathbf{E} \ggg 25)$
-    \STATE \hspace*{1em} $\mathbf{Ch} = (\mathbf{E} \land \mathbf{F}) \oplus ( \neg\mathbf{E}\land \mathbf{G})$
-    \STATE \hspace*{1em} $\Sigma_0 = (\mathbf{A} \ggg 2) \oplus (\mathbf{A} \ggg 13) \oplus (\mathbf{A} \ggg 22)$
-    \STATE \hspace*{1em} $\text{Maj} = (\mathbf{A} \land \mathbf{B}) \oplus (\mathbf{A} \land \mathbf{C}) \oplus (\mathbf{B}\land\mathbf{C})$
-    \STATE \hspace*{1em} $\mathbf{H} \pluseq \Sigma_1 + \mathbf{Ch} + \mathbf{K}[i] + \mathbf{W}[i]$
-    \STATE \hspace*{1em} $\mathbf{D} \pluseq \mathbf{H}$
-    \STATE \hspace*{1em} $\mathbf{H} \pluseq \Sigma_0 + \text{Maj}$
-  \ENDFOR
+  \For{$i \gets 0, 63$}
+    \State \hspace*{1em} $\Sigma_1 = (\mathbf{E} \ggg 6) \oplus (\mathbf{E} \ggg 11) \oplus  (\mathbf{E} \ggg 25)$
+    \State \hspace*{1em} $\mathbf{Ch} = (\mathbf{E} \land \mathbf{F}) \oplus ( \neg\mathbf{E}\land \mathbf{G})$
+    \State \hspace*{1em} $\Sigma_0 = (\mathbf{A} \ggg 2) \oplus (\mathbf{A} \ggg 13) \oplus (\mathbf{A} \ggg 22)$
+    \State \hspace*{1em} $\text{Maj} = (\mathbf{A} \land \mathbf{B}) \oplus (\mathbf{A} \land \mathbf{C}) \oplus (\mathbf{B}\land\mathbf{C})$
+    \State \hspace*{1em} $\mathbf{H} \pluseq \Sigma_1 + \mathbf{Ch} + \mathbf{K}[i] + \mathbf{W}[i]$
+    \State \hspace*{1em} $\mathbf{D} \pluseq \mathbf{H}$
+    \State \hspace*{1em} $\mathbf{H} \pluseq \Sigma_0 + \text{Maj}$
+  \EndFor
 \end{algorithmic}
 \end{algorithm}
 
-\begin{figure}[ht]
+\begin{figure}
       \capstart
       \centering
-      \includegraphics[width=0.9\hsize]{images/sha_MDD}
-      \caption{MDD for one round of SHA-256}
+      \includegraphics[width=0.7\hsize]{images/sha_MDD}
+
+      \caption{MDD for one round of SHA-256. Note for example that a pebble can
+      be placed on $\mathbf{Ch}$ and then removed after $\mathbf{h}_1 = \mathbf{h}+\mathbf{ch}$ is computed}
+
       \label{fig:sha-MDD}
 \end{figure}
 
-\begin{figure}[ht]
+Note that the order of operations chosen for the circuit could have different
+based on the MDD. The compiler is allowed to exploit any ambiguity allowed by
+the representation to implement more optimized circuits.
+
+\begin{figure}
       \capstart
       \centering
       \includegraphics[width=0.9\hsize]{images/sha_round}
@@ -423,8 +511,10 @@ circuit is shown in \cref{fig:sha}.
 
 \section{Discussion and Open Problems} 
 
-A some general heuristic methods for playing the pebble game on a general DAG
-were presented. It is likely that there exist efficiently computable methods
-with better time and/or space performance. 
+A heuristic methods for playing the pebble game on a general DAG were
+presented. It is likely that there exist efficiently computable methods with
+better time and/or space performance.  
 
-
+Additionally methods for the conversion of other reversible languages to an MDD
+intermediate might give further insight into the types of useful heuristic
+strategies that might be implemented. 

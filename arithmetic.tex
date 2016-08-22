@@ -1,4 +1,4 @@
-\chapter{Arithmetic}
+\chapter{Arithmetic Circuits}
 
 A library of efficient commonly used arithmetic functions is needed for
 efficient circuit generation. And especially useful for implementing a basic set
@@ -7,12 +7,14 @@ of built in function in a reversible compiler.
 Further it is useful to have in-place functions whenever possible due to the
 improved efficiency provided by reversible mutation in MDD based cleanup.
 
+This section also demonstrates the usefulness of pebble based circuit analysis.
+
 \section{Addition}
 
   An addition circuit is a circuit which takes two $n$ bit integers $\mathbf{a} =
   a_1a_2\dotsc a_n$ and $\mathbf{b} = b_1b_2\dotsc b_n$ and returns the sum
   $\mathbf{a}+\mathbf{b}$. The operation $(a,b)\mapsto (a,a+b)$ is injective so
-  it is expected that an addition circuit which is in-place on one input exists.
+  it is expected that an addition circuit which is in-place on one of it's input exists.
 
   \subsection{Classic Ripple}
 
@@ -60,21 +62,30 @@ improved efficiency provided by reversible mutation in MDD based cleanup.
     These can then be chained together as they are in the irreversible case.
     The result will be a circuit which takes inputs $(a,b)$ and produces outputs $(a,b,a+b)$.
 
-\subsection{In-Place Ripple}
-    It is sometimes the case that one of the input values is unneeded after the operation.
-    In that case it would save space to overwrite the value.
-    To do this we could try to construct adder which maps inputs $(a,b)\mapsto(a,a+b)$.
+    \todo{When an out of place adder is needed does this result in lower depth
+    then the in place adder below? Possibly lower T-count as well since a full
+    adder has T-count 7}
 
-    Such an adder is described in \cite{CDKM:2004} (Note that not all the optimizations described in the original paper are desirable with our gate set as we wish to maximize shared controls).
-    It is very similar to the classic ripple.
-    The main improvement is the realization that information about the carry could be stored in one of the input bits of each column.
-    This allows it to overwrite one of it's inputs with the resulting sum.
-    The circuit uses two main operations: MAJ, and UMA (See \cref{fig:majuma}).
-    The MAJ operation takes an input carry $c$ and two input bits $a$ and $b$.
-    It computes the carry onto $a$ and partially computes the sum on $b$, it leaves $c$ in an unclean state to be fixed later.
-    This circuit can be repeated and rippled through all of the columns.
-    After that is done the UMA operation can be preformed.
-    This operation cleans up $a$ and $c$ then finishes computing the sum on $b$.
+\subsection{In-Place Ripple}
+
+    It is sometimes the case that one of the input values is unneeded after the
+    operation.  In that case it would save space to overwrite the value.  To do
+    this we could try to construct an adder which implements the injective map
+    $(a,b)\mapsto(a,a+b)$.
+
+    Such an adder is described Cuccaro et. al. in \cite{CDKM:2004} (Note that
+    not all the optimizations described in the original paper are desirable
+    with our gate set as we wish to maximize shared controls).  It is very
+    similar to the classic ripple.  The main improvement is the realization
+    that information about the carry could be stored in one of the input bits
+    of each column.  This allows it to overwrite one of it's inputs with the
+    resulting sum.  The circuit uses two main operations: MAJ, and UMA (See
+    \cref{fig:majuma}).  The MAJ operation takes an input carry $c$ and two
+    input bits $a$ and $b$.  It computes the carry onto $a$ and partially
+    computes the sum on $b$, it leaves $c$ in an unclean state to be fixed
+    later.  This circuit can be repeated and rippled through all of the
+    columns.  After that is done the UMA operation can be preformed.  This
+    operation cleans up $a$ and $c$ then finishes computing the sum on $b$.
 
     \begin{figure}[ht]
         \capstart
@@ -105,8 +116,21 @@ improved efficiency provided by reversible mutation in MDD based cleanup.
         \label{fig:majuma}
     \end{figure}
 
-\section{Controlled Ripple}
-    This is a simple Controlled addition circuit with a gate count and depth $\Theta(n)$.
+    The cost of this adder is $2n-2$ Toffoli gates for an adder $\mod 2^n$.
+    Note that each Toffoli gate has two shared controls which means it is
+    possible to cancel at least two T-gates per Toffoli.
+
+    \todo{Further reductions may be possible using T-par}
+
+\subsection{Controlled Ripple}
+
+    This is a simple Controlled addition circuit with a gate count and depth
+    $\Theta(n)$.  Note that not all gates need be controlled; controlling a set
+    of gates which if removed would transform the circuit into the identity is
+    sufficient. In the case of the in-place adder the MAJ and UMA subcircuits
+    can be made to cancel by removing one gate each. \Cref{fig:ctrlRipple}
+    shows the resulting circuit.
+
     \begin{figure}[ht]
       \capstart
       \centering
@@ -115,8 +139,11 @@ improved efficiency provided by reversible mutation in MDD based cleanup.
       \label{fig:ctrlRipple}
     \end{figure}
     \subsection{Analysis}
-      This modification can be accomplished by changing $2n+1$ CNOT gates into Toffoli gates as shown in \cref{fig:ctrlRipple}.
- 		  This gives a controlled addition circuit of size $n$ ($A^{ctrl}_n$) a total gate count:
+
+      This modification can be accomplished by changing $2n+1$ CNOT gates into
+      Toffoli gates.  This gives a controlled addition circuit of size $n$
+      ($A^{ctrl}_n$) a total gate count:
+
       \begin{align} \label{eq:cadd}
         A^{ctrl}_n = 4n+1
       \end{align}
@@ -125,16 +152,22 @@ improved efficiency provided by reversible mutation in MDD based cleanup.
 
 \section{Multiplication}
   \subsection{Controlled Addition Multiplier}
-    A very simple implementation of multiplication as a controlled addition circuit (see \cref{fig:ctrlRipple}).
-    Given two numbers as bit strings $a$ and $b$ their product can be found by repeatedly shifting forward by one and adding $b$ to the result controlled on the next bit in $a$.
-    See \cref{fig:multAdd} for a four bit example.
 
-    This is an out of place multiplier that uses only 1 additional ancilla for the adder circuits.
+    A very simple implementation of multiplication uses controlled addition
+    circuits (see \cref{fig:ctrlRipple}).  Given two numbers as bit strings $a$
+    and $b$ their product can be found by repeatedly shifting forward by one
+    and adding $b$ to the result controlled on the next bit in $a$.  See
+    \cref{fig:multAdd} for a four bit example. This is essentally the school
+    method of multiplication on binary numbers.
+
+    This is an out of place multiplier that uses only 1 additional ancilla for
+    the adder circuits.
+
     \begin{figure}[ht]
       \capstart
       \centering
       \includegraphics[scale=0.25]{images/multCtrlAdd}
-      \caption{Controlled Addition Multiplier}
+      \caption{Controlled Addition Multiplier. Triangles are used in this figure to show which bits are modified by the adder.}
       \label{fig:multAdd}
     \end{figure}
     \subsubsection{Analysis}
@@ -148,17 +181,15 @@ improved efficiency provided by reversible mutation in MDD based cleanup.
         M_n = 4n^2 - 2n -1
       \end{align}
 
-\subsection{Reversible Karatsuba}
+  \subsection{Reversible Karatsuba\label{sec:kara}}
 
     The following reversible algorithm for Karatsuba improves upon previous
     work\cite{PF:2006}.  It does then primary by using in place addition to
     minimize garbage growth at each level.  It also attempts to choose optimal
     splits instead of dividing the number in half at each step, This is helpful
-    when the integer size is not a power of 2.
-
-    Further an asymptotic improvement is space use (yielding as well an
-    asymptotic improvement in the space-time product), is shown by using pebble
-    games in the analysis. 
+    when the integer size is not a power of 2. Further an asymptotic
+    improvement is space use (yielding as well an asymptotic improvement in the
+    space-time product), is shown by using pebble games in the analysis. 
 
     Let $n\geq 1$ and let $x$ and $y$ be $n$-bit integers.
     The well-known Karatsuba\cite{KO:1963} algorithm is based on the observation that by writing $x=x_1 2^{\lceil n/2\rceil}+x_0$ and $y=y_1 2^{\lceil n/2\rceil }+y_0$ the product $xy$ can be evaluated as $xy=2^n A + 2^{\rceil n/2 \rceil} B + C$, where
@@ -171,8 +202,7 @@ improved efficiency provided by reversible mutation in MDD based cleanup.
       \capstart
       \centering
       \includegraphics[width=2\textwidth/3]{images/karatsuba2}
-      \caption{Karatsuba Multiplication Circuit.
-               Note: In the above circuit notation the black part of the box designates the modified bits in the adder.}
+      \caption{Karatsuba Multiplication Circuit. Triangles are used in this figure to show which bits are modified by the adder.}
       \label{fig:kara2}
      \end{figure}
     \subsubsection{Analysis}
@@ -224,16 +254,126 @@ improved efficiency provided by reversible mutation in MDD based cleanup.
         \label{fig:aKara}
      \end{figure}
 
-   \subsubsection{Time-Space Tradeoffs}
+\subsubsection{Time-Space Tradeoffs}
 
-     We see in \cref{fig:cutoff,fig:size} that there are trade-offs available
-     between circuits size and gate count available by changing the cutoff
-     value.  A higher cuttoff value value results in a larger naive
-     multiplication circuits which are much more space efficient.
+We see in \cref{fig:cutoff,fig:size} that there are trade-offs available
+between circuits size and gate count available by changing the cutoff
+value.  A higher cuttoff value value results in a larger naive
+multiplication circuits which are much more space efficient.
 
-     The reversible pebble game may be used to gain an asymptotic improvement
-     in the space required to implement this algorithm. Note the tree structure
-     of the recursive dependencies shown in \cref{fig:kara-mdd}. 
+The reversible pebble game may be used to gain an asymptotic improvement
+in the space required to implement this algorithm. Note the tree structure of
+the recursive dependencies shown in \cref{fig:kara-mdd}.  We find a level such
+that the size of each nodes subtree is approximately equal to the size of all
+nodes at that level and above. Then for each node at that level in sequence
+compute the node and uncompute all nodes below it. Once all the nodes are
+computed compute the rest of the tree.  This will result in an asymptotic
+improvement in the amount of space used while only applying a constant
+multiplier ($<2$) to the overall time.
+
+
+For Karatsuba circuit on input of size $n$ at a level $x$ in the tree there
+are $3^x$ nodes of size $2^{-x}n$ for a total cost of
+\[
+n\left(\frac{3}{2}\right)^x.
+\]
+
+So the total cost of the full tree is given by
+\[
+    n\sum_{i=0}^{N} \left(\frac{3}{2}\right)^i,
+\]
+where $N=\log_2 n$.
+
+We would like to break this tree into approximately equal sized subtrees at
+some level.  Each tree at that level will be computed then uncomputed
+leaving only the top node. To minimize space we will choose the size of
+these subtrees to be approximately equal to the remaining size of the tree
+above them.  So to find the height $k$ of such a tree we set:
+
+\[
+    \sum_{i=0}^{N-k-1} \left(\frac{3}{2}\right)^i = \frac{1}{2^{N-k}}\sum_{i=0}^{k-1} \left(\frac{3}{2}\right)^i.
+\]
+
+Since this is a geometric series we can use the identity $\sum_{k=0}^{n-1} r^k
+= \frac{1-r^n}{1-r}$ which holds for all $r$ and obtain
+
+\begin{align*}
+    \frac{1- \nicefrac{3}{2}^{N-k}}{1 - \nicefrac{3}{2}} &= \frac{1}{2^{N-k}}\frac{1- \nicefrac{3}{2}^{k}}{1 - \nicefrac{3}{2}}.
+\end{align*}
+
+Rearranging terms, we obtain
+
+\begin{align*}
+    1- \nicefrac{3}{2}^{N-k} &= 2^{k-N} - \frac{3^k}{2^N}.
+\end{align*}
+
+Since $k\leq N$ and since we want that $\nicefrac{3}{2}^{N-k} \geq
+\frac{3^k}{2^N}$ a simple calculation shows that this will be the case for $k
+\leq \frac{N}{ 2- \frac{\log 2}{\log 3}} = 0.731N$. The total space use without
+this optimization is normally calculated as
+
+\[
+    n\sum_{k=0}^{\log_2 n - 1} \left(\frac{3}{2}\right)^k = n\frac{1-(\nicefrac{3}{2})^{\log_2 n}}{1-\nicefrac{3}{2}}.
+\]
+
+Which gives space use of $O(n(\nicefrac{3}{2})^{\log_2 n}))$ which is
+equivalent to $O(n^{\log_2 3})$ or approximately $O(n^{1.585})$
+Using the above optimization we get space usage that can be bounded by
+\[
+    O(n(\nicefrac{3}{2})^{\frac{\log 3}{ 2\log 3 - \log 2}\log_2 n}) \approx O(n^{1.428}).
+\]
+
+To find the depth of the circuit note that each node at level $k$ must be
+computed sequentially. At level $k$ the number of trees is
+\[
+    3^{\left(1-\frac{\log 3}{ 2\log 3 - \log 2}\right)\log_2 n}.
+\]
+
+Each tree is of depth :
+
+\[
+    \frac{n}{2^{1-\frac{\log 3}{ 2\log 3 - \log 2}}}
+\]
+
+This gives an overall depth for computing the $k$ level of:
+
+\[
+    n\left(\frac{3}{2}\right)^{\left(1-\frac{\log 3}{ 2\log 3 - \log 2}\right)\log_2 n} \approx n^{1.152}
+\]
+
+This gives a space-depth product in the fully parallel version of $n^{1+\log_2
+3}$ which is the same
+
+\subsection{Generalization to other recursions}
+
+Assume that we are given a function with input size $n$ which splits a problem
+into $a$ subproblems of size $\nicefrac{n}{b}$ where total work done to
+subdivide is $O(n)$. Then the overall work to compute the function for a
+problem of size $n$ is given by:
+
+\[
+    n\sum_{i=0}^{N} \left(\frac{a}{b}\right)^i.
+\]
+
+Solving as above we have:
+\[
+    k \leq \frac{\log_b n}{ 2- \frac{\log b}{\log a}}.
+\]
+
+This means that our method is effective for recursive functions where the
+number of sub-problems is greater than the problem size reduction factor. This
+is intuitive since if the problem size reduction factor is equal to the number
+of sub-problems then the sum over the space requirements of each node in a
+given level will always be equal. So the strategy discussed above would only
+give a constant factor sspace reduction.
+
+
+By setting $b$ in $\log b / \log a$ equal to $1$ we get a square root
+reduction in space. This should be compared with a pebble games for complete
+binary graphs that was reported on in \cite{peb16} in which a similar
+recursive structure was considered.
+
+
 
       \begin{figure}[p]
         \capstart
@@ -275,7 +415,7 @@ improved efficiency provided by reversible mutation in MDD based cleanup.
      \end{figure}
   In \cref{fig:div} is a simple integer division circuit based on the binary
   form of long division as outlined in \cref{algo:intdiv}.
-    \begin{program}
+    \begin{algorithm}
       \capstart
       \caption{Integer Division with Remainder: find $R$ and $Q$ for $N/D$}
       \begin{algorithmic}[1]
@@ -292,7 +432,7 @@ improved efficiency provided by reversible mutation in MDD based cleanup.
         \EndFor
       \end{algorithmic}
       \label{algo:intdiv}
-    \end{program}
+    \end{algorithm}
     An interesting feature of this algorithm is that combined with an in-place adder\cite{CDKM:2004} it can easily be made partially in-place.
 
     On \cref{line:intdiv:setToN} instead of allocating new space for $R(0)$ we can just use $N(i)$ as $R(0)$ since it will not be used again in the algorithm.
@@ -305,8 +445,13 @@ improved efficiency provided by reversible mutation in MDD based cleanup.
 \section{Trigonometric functions}
     \subsection{CORDIC}
 
-	The basic idea of the CORDIC\cite{V:1959} algorithm is to apply
-	repeated rotations which converge on a desired value.
+	The CORDIC\cite{V:1959} algorithm was originally developed to calculate
+	trigonometric functions on simple analog computers. Because of this the
+	algorithms uses only simple operations such as bitshift, addition, and
+	negation. Since these operations are simple to implement as reversible
+	computations (and can in fact be done in-place) it is well suited for
+	adaptation as a reversible algorithm. The basic idea of CORDIC is to
+	apply repeated rotations which converge on a desired value:
 
         \[ \theta = \alpha_0 + \alpha_1 + \dotsb + \alpha_{n-1} \]
 
@@ -357,9 +502,10 @@ improved efficiency provided by reversible mutation in MDD based cleanup.
     \subsubsection{Reversible Implementation}
         The CORDIC algorithm can be implemented reversibly.
 
-        We pre-compute all of our rotation angles ($\gamma_0,\gamma_1,\dotsc,\gamma_{n-1}$) as well as the scaling factor $K(n)$.
-
-        Our input is the angle $\theta$ and our output is ($x$,$y$) where $\tan\theta = y/x$.
+	We pre-compute all of our rotation angles
+	($\gamma_0,\gamma_1,\dotsc,\gamma_{n-1}$) as well as the scaling factor
+	$K(n)$. Our input is the angle $\theta$ and our output is ($x$,$y$)
+	where $\tan\theta = y/x$.
 
         \paragraph{Finding the directions of rotation}
             The directions of rotation can be determined using the sign bit of $\theta$.
@@ -389,7 +535,43 @@ improved efficiency provided by reversible mutation in MDD based cleanup.
                 \label{fig:CORDICRotations}
             \end{figure}
         \subsubsection{Analysis}
-        Note that the circuits shown in \cref{fig:CORDICRotations,fig:CORDICDirections} can be partially parallelized.
+	\begin{figure}
+                \capstart
+                \centering
+                \includegraphics[width=0.9\textwidth]{images/CordicMDD}
+                \caption{MDD for the reversible implementation of the CORDIC algorithm}
+                \label{fig:CordicMDD}
+        \end{figure}
+
+	Convergence of the CORDIC algorithm requires $O(n)$ rotations where $n$
+	is the number of bits of precision required.  The cost of each rotation
+	is also $O(n)$. This means the total cost of preforming CORDIC is
+	$O(n^2)$. 
+	
+	If we were to allocate memory according to the naive method this would
+	also mean a space used of $O(n^2)$ Instead an MDD pebble game is used
+	to optimize this circuit.  The MDD for this implementation in shown in
+	\cref{fig:CordicMDD}. On the top part of the diagram are modification
+	chains for $x$ and $y$. The issue with these chains is that each new
+	value is dependent on both of the previous values, i.e. $x_n+1$ depends
+	on $x_n$ and $y_n$. This means that they cannot be both be advanced
+	without leaving behind pebbles. We can choose to only leave pebbles
+	behind on half the nodes, for example we can pebble $x_0,\dotsc,X_n$
+	while advancing a single pebble along $y$. This however will only half
+	the number of pebbles required.
+
+	Assuming we pebble the $x$ chain and move the $y$ pebble forward as
+	described above we can see the pebbles along the $x$ as a sort 1D
+	pebble game, we therefore can use the previously discussed strategies.
+	With an incremental strategy we would only need to store
+	$O(n^{\nicefrac{1}{2}})$ $x$ registers. This improves our overall space
+	use to $O(n^{\nicefrac{3}{2}})$ while leaving our time complexity
+	unchanged at $O(n^2)$.
+	
+	\Cref{fig:CORDICRotations} shows a possible generated circuit for the
+	strategy where the $x$ chain is fully covered while the $y$ chain is
+	advanced. As implied by the MDD this circuit can be partially
+	parallelized with the circuit in \cref{fig:CORDICDirections}.
 
 \section{Boolean Expressions}
 
@@ -503,3 +685,4 @@ The results are shown below:
     000 \to 00\underline{1} \to 0\underline{1}1 \to 0\underline{10} \to \underline{1}10 \to
     \underline{1}1\underline{1} \to \underline{10}1 \to 100
   \]
+  A possible application of such a counter is in an input erasing multiplier.\todo{expand or remove}
