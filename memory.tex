@@ -4,7 +4,7 @@ Memory management is important when compiling a program to be run in a resource
 constrained environment. It is a topic of great interest in program compilation
 in general. The problem is however simpler in the case of irreversible
 languages. Once it is determined that some data is no longer needed it can
-simply be deleted and reallocated as needed.
+simply be zeroed and reallocated as needed.
 
 In a reversible computation memory management is somewhat complicated by the
 reversibility constraint since a bit cannot be simply set to zero and reused
@@ -36,19 +36,28 @@ This means that temporary ancilla may be allocated to compute a statement but
 this ancilla can be cleaned up between statements.
 
 \paragraph{Modification operators} are used for operations that can be done
-in-place. For example the addition modification operator, \verb|+=|. Operations
-that cannot be done in place can only occur to the right of a modification
+in-place\footnotemark. For example the addition modification operator, \verb|+=|. Operations
+that cannot be done in-place can only occur to the right of a modification
 operator. These operations can then be implemented, the result can be applied in
 place to the left hand side value, and then cleaned up using the Bennett method if
 necessary. This means that memory need only be allocated temporarily for each
 modification statement.
 
-For example say we wish to evaluate the statement \verb|b+=a*c|\footnote{i.e.
-replace the bit-string $b$ with the value $b+ac\mod 2^n$ where $n$ is the
-length of $b$.}. First \verb|a*c| is computed by using additional ancilla as
-needed. The result is then reversibly added to \verb|b| (using the function
-$(a,b)\mapsto(a,a+b)$ discussed previously). Finally the circuit for \verb|a*c|
-can be reversed in order to clean up any allocated ancilla.
+\footnotetext{An in-place operation is one which overwrites one of its inputs
+    with the result. For example the previously mentioned adder which maps
+    $(a,b)\mapsto(a,a+b)$ is in-place. Conversely an out-of-place operation
+    computes its result onto a set of ancilla and leaves the inputs unchanged.
+For example an out-of-place adder could compute the function
+$(a,b,0^n)\mapsto(a,b,a+b)$.}
+
+For example say we wish to evaluate the statement \verb|b+=a*c|\footnotemark.
+First \verb|a*c| is computed by using additional ancilla as needed. The result
+is then reversibly added to \verb|b| (using the function $(a,b)\mapsto(a,a+b)$
+discussed previously). Finally the circuit for \verb|a*c| can be reversed in
+order to clean up any allocated ancilla.
+
+\footnotetext{i.e.  replace the bit-string $b$ with the value $b+ac\mod 2^n$
+where $n$ is the length of $b$.}
 
 \paragraph{If conditions} require a pre-condition which is used to choose which
 branch to take, and a post-condition which is true if and only if the top
@@ -66,8 +75,9 @@ Any computation where execution is independent of input can be modeled as a
 Directed Acyclic Graph (DAG). This graph is sometimes called a
 \emph{Functional-dependence} network.  The nodes on the graph are associated
 with functions and the arrows represent data dependencies required for the
-computation of those functions. These graphs are loop free by construction
-assuming \todo{Clarify} no circular dependencies.
+computation of those functions. These graphs are loop free by construction if
+there are no circular dependencies\footnote{Any computation with circular
+function dependencies is not well-formed and is not implementable.}.
 
 The \emph{Black Pebble Game} is a game played on a DAG which is used to model
 irreversible computation. The rules are as follows:\todo{Example!}
@@ -99,7 +109,8 @@ forward computation. This means that pebbles may still be removed, but removal
 is subject to the same conditions as placement. In other words we make
 placement and removal of pebbles symmetric similarly to the way forward and
 reverse computation are made symmetric in reversible computing.  The rules for
-this version of the game are given below:\todo{Example!}
+this version of the game are given below (an example is shown in
+\cref{fig:rev-peb-game}):
 
 \begin{enumerate}
 
@@ -115,7 +126,10 @@ this version of the game are given below:\todo{Example!}
       \capstart
       \centering
       \includegraphics[width=0.9\hsize]{images/rev-peb-game}
-      \caption{Reversible Pebble game}
+
+      \caption{Reversible Pebble game. This figure demonstrates a strategy for
+      pebbling the $g$ node using a total of six pebbles.}
+      
       \label{fig:rev-peb-game}
 \end{figure}
 
@@ -123,10 +137,14 @@ The space complexity of a game is given by the maximum number of pebbles which
 are in play at any given time. It has been shown that in general computing the
 \emph{pebble number} (the minimum number of pebbles, over all possible games,
 required to the final target pebble) for an arbitrary DAG is
-PSPACE-complete\cite{chan13} \todo{for a physics thesis, you at least need a
-footnote explaining what this is, and relate to NP-complete, since this is more
-familiar in physics. and mention that it also contains BQA, QMA, and it's
-generalization QIP, which in fact equals PSPACE.}.
+PSPACE-complete\cite{chan13}\footnotemark.
+
+\footnotetext{A problem is said to be in PSPACE if it can be solved using an amount
+of memory which is polynomial in the input length. A problem is
+PSPACE-complete if all problems in PSPACE can be transformed into it using
+a polynomial amount of time. The PSPACE-complete class contains the well
+known Quantum Merlin Arthur (QMA), BQP, and NP-complete classes and is
+equivalent to Quantum Interactive Polynomial time (QIP).}
 
 Strategies for playing these games have been analyzed in the case of, one
 dimensional directed graphs, as well as for trees\cite{peb16}.  There are three
@@ -184,8 +202,10 @@ PSPACE-complete.
   time and the vertical axis is the state of the game at a given time slice.}
 \end{figure}
 
-\section{Mutable Dependency Diagram(MDD)}
-\todo{This name should probably be changed to imply that this is a game.}
+\section{Mutable Dependency Diagram (MDD)} 
+
+\todo{This name should probably be changed to imply that this is a game. And to
+match better with the names of other games like the reversible pebble game.}
 
 In this section a new game for the optimization of reversible computation is
 presented. It is a generalization of the reversible pebble game in that any
@@ -207,8 +227,9 @@ thus losing the advantages that may have been gained by using an in-place
 operation.
 
 In order to better represent in-place operations a new pebble game is proposed.
-Rules one and two are similar to the reversible pebble game. The third rule
-(as well as two types of labeled edges) has been added:\todo{Example!}
+Rules one and two are similar to the reversible pebble game. Two types of labeled edges and a third rule
+have been added (see \cref{fig:mddExample} for an example of an MDD game):
+
 
 \begin{enumerate}
 
@@ -374,7 +395,7 @@ of its dependencies (as shown in \cref{fig:one-way}).
   \caption{Dependency patterns which effect eager cleanup}
 \end{figure}
 
-\todo{Write algorithm out formally and adapt the below proof sketch to the neewversion}
+\todo{Write algorithm out formally and adapt the below proof sketch to the new version}
 
 \begin{theorem}
 
@@ -434,10 +455,10 @@ choose checkpoint locations where the set of nodes with future dependencies is
 small.
 
 This strategy introduces a constant multiplier on time in exchange for a
-quadratic reduction in space in some cases. This is not necessarily the case
-for all all graphs. Later discussion in \cref{sec:kara} shows a smaller then
-quadratic space reduction in the case of a specific graph. See \cref{sec:kara}
-for an application of this strategy to the Karatsuba circuit.
+quadratic reduction in space in some cases (for example in the 1D case). This
+is not necessarily the case for all graphs though. Later discussion in
+\cref{sec:kara} shows a smaller then quadratic space reduction when applying
+this strategy to the Karatsuba circuit.
 
 \subsection{Circuit Generation}
 
@@ -448,12 +469,17 @@ information must be added to each node specifying which circuit input
 corresponds to each incoming arrow.
 
 We start with a circuit consisting of registers corresponding to the input
-nodes of the graph, these are the inputs to the circuit. A heap\todo{Explain}
-of currently available ancilla is kept. This ensures that the lowest available
-numbered ancilla is always the one allocated so ancilla use is minimized.
+nodes of the graph, these are the inputs to the circuit. Ancilla are allocated
+using a heap\footnotemark, this ensures that the lowest available numbered
+ancilla is always the one allocated so ancilla use is minimized.
 
-Starting with a set of built in functions, new functions can be constructed as MDDs.
-After a function is constructed it can be used a graph node in an MDD.
+\footnotetext{A heap is a tree data structure where a parent node always has a
+lower (for a min heap) or higher (for a max heap) value then its children. The
+root node of a min heap is the lowest valued node in the heap. This data
+structure is used here to always efficiently assign the lowest valued ancilla.}
+
+Starting with a set of built in functions, new functions can be constructed as
+MDDs. After a function is constructed it can be used a graph node in an MDD.
 
 \begin{itemize}
 
