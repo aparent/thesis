@@ -1,3 +1,4 @@
+make_output
 X.tex
 .DS_Store
 thesis.bbl
@@ -13,3 +14,10 @@ thesis.toc
 *.pdf
 *.out
 *.toc
+*.bbl
+*.blg
+*.fls
+*.lof
+*.lot
+*.fbd_latexmk
+*~

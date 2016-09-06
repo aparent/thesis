@@ -65,7 +65,7 @@ for reversible Karatsuba.
     The result will be a circuit which takes inputs $(a,b)$ and produces
     outputs $(a,b,a+b)$.  Note that since a Toffoli gate can be implemented in
     T-depth one\cite{selinger2013} an out-off-place adder can be implemented in
-    T-depth $n$ where $n$ is the bit width of its inputs. 
+    T-depth $n$ where $n$ is the bit width of its inputs.
 
 \subsection{In-Place Ripple}
 
@@ -187,7 +187,7 @@ for reversible Karatsuba.
     realized by using in place addition to minimize garbage growth at each
     level and by optimally splitting the input in each recursive step rather
     then just dividing the bit-string in half; This is helpful when the integer
-    size is not a power of 2. 
+    size is not a power of 2.
 
     Let $n\geq 1$ and let $x$ and $y$ be $n$-bit integers.  The
     Karatsuba\cite{KO:1963} algorithm is based on the observation that by
@@ -401,10 +401,10 @@ given level will always be equal. So the strategy discussed above would only
 give a constant factor space reduction.
 
 
-By setting $b$ in $\log b / \log a$ equal to $1$ we get a square root
-reduction in space. This should be compared with a pebble games for complete
-binary graphs that was reported on in \cite{peb16} in which a similar
-recursive structure was considered.
+By setting $b$ in $\log b / \log a$ equal to $1$ we get a square root reduction
+in space. This should be compared with a pebble games for complete binary
+graphs that was reported on in \cite{peb16} in which a similar recursive
+structure was considered.
 
 
 
@@ -581,15 +581,20 @@ recursive structure was considered.
                 \capstart
                 \centering
                 \includegraphics[width=0.9\textwidth]{images/CordicMDD}
-                \caption{MDD for the reversible implementation of the CORDIC algorithm}
+
+                \caption{MDD for a reversible implementation of the CORDIC
+                algorithm. Note that $x_0$ and $y_0$ are constants and
+                $\theta_0$ is the input to the function.
+                The $\sigma$ nodes are each one bit in size.}
+
                 \label{fig:CordicMDD}
         \end{figure}
 
 	Convergence of the CORDIC algorithm requires $O(n)$ rotations where $n$
 	is the number of bits of precision required.  The cost of each rotation
 	is also $O(n)$. This means the total cost of performing CORDIC is
-	$O(n^2)$. 
-	
+	$O(n^2)$.
+
 	If we were to allocate memory according to the naive method this would
 	also mean a space used of $O(n^2)$ Instead an MDD pebble game is used
 	to optimize this circuit.  The MDD for this implementation in shown in
@@ -609,7 +614,7 @@ recursive structure was considered.
 	$O(n^{\nicefrac{1}{2}})$ $x$ registers. This improves our overall space
 	use to $O(n^{\nicefrac{3}{2}})$ while leaving our time complexity
 	unchanged at $O(n^2)$.
-	
+
 	\Cref{fig:CORDICRotations} shows a possible generated circuit for the
 	strategy where the $x$ chain is fully covered while the $y$ chain is
 	advanced. As implied by the MDD this circuit can be partially
@@ -640,6 +645,7 @@ and because they can only be applied through a XOR operation rather then directl
 
 One simple optimization is to notice that the Toffoli gate includes an XOR operation.
 So we can calculate an expression such as $ab \oplus cd$ with:
+
 \[
     \Qcircuit @C=1em @R=.7em {
         \lstick{a} & \ctrl{4} & \qw      & \rstick{a}\qw\\
@@ -652,12 +658,14 @@ So we can calculate an expression such as $ab \oplus cd$ with:
 
 One method of generating quantum circuits from boolean expressions is to first transform them into circuits of NOT, XOR, and AND operations.
 Given an expression with the recursive structure:
+
 \begin{verbatim}
 TERM = VAR
      | AND (TERM list)
      | XOR (TERM list)
      | NOT TERM
 \end{verbatim}
+
 An algorithm to produce a circuit for such an expression is given by:
 \todo{Boolean expression algorithm: Formally write this up}
 

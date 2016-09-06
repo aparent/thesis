@@ -3,26 +3,28 @@
 Memory management is important when compiling a program to be run in a resource
 constrained environment. It is a topic of great interest in program compilation
 in general. The problem is however simpler in the case of irreversible
-languages. Once it is determined that some data is no longer needed it can
-simply be zeroed and reallocated as needed.
+languages. Once it is determined that some data is no longer needed it can be
+zeroed and reallocated as needed.
 
 In a reversible computation memory management is somewhat complicated by the
-reversibility constraint since a bit cannot be simply set to zero and reused
-when it is no longer needed. The exact nature of the difference between the
-reversible and irreversible memory models is perhaps made most clear by the
-rules of the black and reversible pebble games discussed below.
+reversibility constraint since a bit cannot be simply set to zero and
+reused\footnotemark. The exact nature of the difference between the reversible
+and irreversible memory models is perhaps made most clear by the rules of the
+black and reversible pebble games discussed below.
+
+\footnotetext{This is because the operation $x\mapsto 0$ is not reversible.}
 
 In this section a representation for reversible computation (MDD) is presented.
 This representation contains all necessary information about the structure of
 the computation that is required for the compiler to perform automated
 space-time optimizations using pebble games. It is proposed as an
 intermediate representation to be used when compiling high level programming
-languages to reversible circuits. 
+languages to reversible circuits.
 Such a representation is useful not only in the context of compilation but also in the analysis of circuits.
 
 \section{Overview of Existing Approaches}
 
-\subsection{Janus\label{sec:janus}} 
+\subsection{Janus\label{sec:janus}}
 
 Janus\cite{YG:2007,LD:1982} is a reversible programming language.  It's main
 focus is not to be a circuit description language, but to be logically
@@ -80,13 +82,25 @@ there are no circular dependencies\footnote{Any computation with circular
 function dependencies is not well-formed and is not implementable.}.
 
 The \emph{Black Pebble Game} is a game played on a DAG which is used to model
-irreversible computation. The rules are as follows:\todo{Example!}
+irreversible computation. The rules are as follows:(an example is shown in
+\cref{fig:black-peb-game}):
 
 \begin{enumerate}
   \item A pebble can be added to a node if and only if all predecessors of the
     node have pebbles.
   \item A pebble can be removed at any time.
 \end{enumerate}
+
+\begin{figure}
+      \capstart
+      \centering
+      \includegraphics[width=0.9\hsize]{images/black-peb-game}
+
+      \caption{Black Pebble game. This figure demonstrates a strategy for
+      pebbling the $g$ node using a total of four pebbles.}
+
+      \label{fig:black-peb-game}
+\end{figure}
 
 Pebble games are often used to study space-time trade-offs in computing. For
 example if we take some computation and model it as a DAG we can try and find
@@ -129,7 +143,7 @@ this version of the game are given below (an example is shown in
 
       \caption{Reversible Pebble game. This figure demonstrates a strategy for
       pebbling the $g$ node using a total of six pebbles.}
-      
+
       \label{fig:rev-peb-game}
 \end{figure}
 
@@ -175,7 +189,7 @@ in the analysis of reversible Karatsuba.
 
 Finally the third is the optimal strategy (for a given space bound) from Knill
 \cite{knill:95}. Finding such a strategy in the general case is
-PSPACE-complete.  
+PSPACE-complete.
 
 \todo{Briefly explain Knill}
 
@@ -202,14 +216,14 @@ PSPACE-complete.
   time and the vertical axis is the state of the game at a given time slice.}
 \end{figure}
 
-\section{Mutable Dependency Diagram (MDD)} 
+\section{Mutable Dependency Diagram (MDD)}
 
 \todo{This name should probably be changed to imply that this is a game. And to
 match better with the names of other games like the reversible pebble game.}
 
 In this section a new game for the optimization of reversible computation is
 presented. It is a generalization of the reversible pebble game in that any
-reversible pebble game can be represented on an MDD. 
+reversible pebble game can be represented on an MDD.
 
 Lacking in the original pebble game is an effective way to represent
 mutation\footnote{Mutation in this context means variables that change in
@@ -281,6 +295,19 @@ reversible pebble game.
   represented with sold lines while normal dependency edges used a dashed line.}
 \end{figure}
 
+\begin{theorem} For all MDDs a strategy to pebble all nodes exists and is
+efficiently computable. \end{theorem}
+
+\begin{proof} Consider the following simple strategy. First perform a
+topological sort\footnote{A topological ordering is an ordering of nodes in
+a graph such that for all edges $ab$; $a$ comes before $b$. A DAG
+always has at least one topological ordering. The complexity of finding
+a topological (i.e. performing a topological sort) ordering is $O(E+V)$
+where $E$ is the number of edges and $V$ is the number of vertices in the
+graph.} on the nodes of the graph. Now place a pebble on each node in the
+sorted order. It is guaranteed that the dependencies of each node will be
+pebbled since they are placed in sorted order. The entire graph may be covered
+by pebbles in this fashion.\end{proof}
 
 \subsection{Converting a Computation to an MDD}
 
@@ -301,24 +328,20 @@ depends. In order for a computation defined by a mutation edge to be implemented
 all parent nodes along dependency edges pointing to the child node of the
 mutation edge must be available.
 
-For example the computation $(a,b)\mapsto(a,a+b)$ might be represented as a
-solid arrow from the node $b$ to the node $a+b$ with a dependency arrow coming
-from $a$.
+%For example the computation $(a,b)\mapsto(a,a+b)$ might be represented as a
+%solid arrow from the node $b$ to the node $a+b$ with a dependency arrow coming
+%from $a$.
 
+For example consider the Janus program (where \verb|x|, \verb|y|, and \verb|z|
+are the inputs and outputs and \verb|t| is a temporary variable):
 
-\begin{theorem} For all MDDs a strategy to pebble all nodes exists and is
-efficiently computable. \end{theorem}
-
-\begin{proof} Consider the following simple strategy. First perform a
-topological sort\footnote{A topological ordering is an ordering of nodes in
-a graph such that for all edges $ab$; $a$ comes before $b$. A DAG
-always has at least one topological ordering. The complexity of finding
-a topological (i.e. performing a topological sort) ordering is $O(E+V)$
-where $E$ is the number of edges and $V$ is the number of vertices in the
-graph.} on the nodes of the graph. Now place a pebble on each node in the
-sorted order. It is guaranteed that the dependencies of each node will be
-pebbled since they are placed in sorted order. The entire graph may be covered
-by pebbles in this fashion.\end{proof}
+\begin{verbatim}
+x y z t
+t += x + 5
+y += t
+z += y*t
+x += z + y
+\end{verbatim}
 
 \todo{Other things that may be nice to prove, the construction of an MDD from a
       simple language show that the MDD computes the same function as the language.}
@@ -419,7 +442,7 @@ For the base $k=1$ there is only one mutation path, this path either leads to
 an output, in which case no cleanup is necessary, or leads to a node that has
 to be cleaned up. However, since all inputs to the path are still available by
 assumption, the pebble on this path may be moved up and down and may therefore
-be moved to an arbitrary position. 
+be moved to an arbitrary position.
 
 Now, we make the inductive step to $k+1$ paths. Recall that a pebble can be
 moved backward along a path if all their dependency edges pointing to the node
@@ -555,11 +578,11 @@ the representation to implement more optimized circuits.
       \label{fig:sha}
 \end{figure}
 
-\section{Discussion and Open Problems} 
+\section{Discussion and Open Problems}
 
 Heuristic methods for playing the pebble game on a general DAG were presented.
 It is likely that there exist efficiently computable methods with better time
-and/or space performance.  
+and/or space performance.
 
 Additionally methods for the conversion of other reversible languages to an MDD
 intermediate might give further insight into the types of useful heuristic

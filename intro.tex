@@ -44,16 +44,11 @@ Efficient generation of quantum circuits is important since in many quantum
 algorithms the cost of implementing a reversible oracle dominates\todo{cite
 some evidence of this}.
 
-Due to the focus on generation of circuits for use in quantum computation we
-focus on the circuit model. The primary feature of the circuit model that makes
-it useful in this setting is the fact that all operations are applied
-unconditionally. This is important in the case of a quantum computer with
-classical control. In order for the classical control to gain information about
-the state of the system in order to make decisions about which operations to
-apply a measurement must be made. This means that if the entire computation is
-to be performed in superposition we must work in the circuit model. The focus
-of this thesis is on efficiently generating the reversible parts of the
-computation.  \todo{mmosca: It's still interesting of course to execute
+The focus of this thesis is on efficiently generating the reversible parts of a
+quantum computation using the circuit model. In a quantum computer conditional
+operations require measurements to be made. The circuit model corresponds with
+measurement free computation since all operations are applied unconditionally.
+\todo{mmosca: It's still interesting of course to execute
 circuits with intermediate measurements whose results we use to decide what to
 do next. Your focus is on implementing the reversible pieces}
 
@@ -77,9 +72,19 @@ Method''\cite{Bennett:73}. In this method each irreversible gate is replaced
 with a reversible version with additional space allocated as necessary. Then
 the final result is copied on to the newly allocated set of bits and the entire
 circuit is repeated in reverse in order to uncompute any intermediate
-information computed by the circuit\todo{add diagram}. So given an irreversible
+information computed by the circuit(see \cref{fig:bennett}). So given an irreversible
 function $f(x)$ (where $f(x)$ is of size $n$) we can use the Bennett method to
 generate a reversible function $(x,0^{n+m}) \mapsto (x,f(x),0^m)$.
+
+\begin{figure}
+      \capstart
+      \centering
+      \includegraphics[width=0.8\hsize]{images/bennett}
+
+      \caption{Bennett}
+
+      \label{fig:bennett}
+\end{figure}
 
 The standard reversible gate set which will be used includes the following gates:
 
