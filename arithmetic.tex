@@ -1,22 +1,20 @@
 \chapter{Arithmetic Circuits}
 
-A library of efficient commonly used arithmetic functions is needed for
-efficient circuit generation. And especially useful for implementing a basic set
-of built in function in a reversible compiler.
-
-Further it is useful to have in-place functions whenever possible due to the
-improved efficiency provided by reversible mutation in MDD based cleanup.
+A library of commonly used arithmetic functions is needed for implementing a
+basic set of built in functions in a reversible compiler.  Extra consideration
+is given to in-place functions whenever possible due to the improved efficiency
+provided by reversible mutation in MDD based cleanup.
 
 This section also demonstrates the usefulness of pebble based circuit analysis.
-It is possible to achieve an asymptotic improvement in the space-time product
-for reversible Karatsuba.
+It is possible, using pebble games, to achieve an asymptotic improvement over
+previous results in the space-time product for reversible Karatsuba.
 
 \section{Addition}
 
   An addition circuit is a circuit which takes two $n$ bit integers $\mathbf{a} =
   a_1a_2\dotsc a_n$ and $\mathbf{b} = b_1b_2\dotsc b_n$ and returns the sum
-  $\mathbf{a}+\mathbf{b}$. The operation $(a,b)\mapsto (a,a+b)$ is injective so
-  it is expected that an addition circuit which is in-place on one of it's input exists.
+  $\mathbf{a}+\mathbf{b}\mod 2^n$. The operation $(a,b)\mapsto (a,a+b)$ is injective so
+  it is expected that an addition circuit which is in-place on one of its input exists.
 
   \subsection{Classic Ripple}
 
@@ -25,9 +23,9 @@ for reversible Karatsuba.
     result modulo 2 and a carry is set to be added to the next column if the
     result is $>1$.
 
-    To perform this algorithm we will need a circuit that takes three bits then
-    calculates a carry and a sum.  These can then be applied iteratively taking
-    the two bits from the column of the numbers that are to be added as well as
+    To perform this algorithm we will need a circuit which takes three bits then
+    calculates the carry and sum.  These can then be applied iteratively taking
+    the two bits from each column of the numbers that are to be added as well as
     the previous carry.
 
     This can be done with a full adder circuit.  A full adder is a circuit
@@ -39,7 +37,7 @@ for reversible Karatsuba.
         \capstart
         \centering
         \includegraphics[width=0.5\textwidth]{images/classicalFA.pdf}
-        \caption{Irreversible full adder}
+        \caption{Irreversible full adder.}
         \label{fig:classicalFA}
     \end{figure}
     In the reversible case a circuit (see figure~\ref{fig:reversibleFA}) can be constructed that performs the mapping:
@@ -57,7 +55,7 @@ for reversible Karatsuba.
               \lstick{0} & \targ    & \targ    & \qw      & \qw      &\rstick{ab \oplus ac \oplus bc}\qw
           }
         \]
-        \caption{Reversible full adder}
+        \caption{Reversible full adder\cite{tomAdder}. Partially in place since $c$ is overwritten.}
         \label{fig:reversibleFA}
     \end{figure}
 
@@ -113,7 +111,7 @@ for reversible Karatsuba.
             \]
             \caption{UMA}
         \end{subfigure}
-        \caption{}
+        \caption{Basic operations used in the adder.}
         \label{fig:majuma}
     \end{figure}
 
@@ -121,22 +119,27 @@ for reversible Karatsuba.
     Note that each Toffoli gate has two shared controls which means it is
     possible to cancel at least two T-gates per Toffoli.
 
-    \todo{Further reductions may be possible using T-par}
+    %\todo{Further reductions may be possible using T-par}
 
 \subsection{Controlled Ripple}
 
     This is a simple Controlled addition circuit with a gate count and depth
     $\Theta(n)$.  Note that not all gates need be controlled; controlling a set
     of gates which if removed would transform the circuit into the identity is
-    sufficient. In the case of the in-place adder the MAJ and UMA subcircuits
+    sufficient\footnotemark. In the case of the in-place adder the MAJ and UMA subcircuits
     can be made to cancel by removing one gate each. \Cref{fig:ctrlRipple}
     shows the resulting circuit.
+
+    \footnotetext{Let $U_{\text{ctrl}}$ denote a controlled $U$ operation. The
+    simplest example of this is $W=UVU^{-1}$. Here we can construct
+    $W_{\text{ctrl}} = UV_{\text{ctrl}}U^{-1}$. As a slightly more complex example
+    say $ABC=I$ and $X=AYBZC$ then $X_{\text{ctrl}} = AY_{\text{ctrl}}BZ_{\text{ctrl}}$.}
 
     \begin{figure}[ht]
       \capstart
       \centering
       \includegraphics[width=\textwidth]{images/4BitRippleAdderCtrl}
-      \caption{Controlled In-Place Ripple Adder}
+      \caption{Controlled In-Place Ripple Adder. Based on the adder from \cite{CDKM:2004}. }
       \label{fig:ctrlRipple}
     \end{figure}
     \subsection{Analysis}
@@ -152,13 +155,14 @@ for reversible Karatsuba.
 \section{Multiplication}
   \subsection{Controlled Addition Multiplier}
 
-    A very simple implementation of multiplication uses controlled addition
-    circuits (see \cref{fig:ctrlRipple}).  Given two numbers as bit strings $a$
-    and $b$ their product can be found by repeatedly shifting forward by one
-    and adding $b$ to the result controlled on the next bit in $a$.  See
-    \cref{fig:multAdd} for a four bit example. This is essentially the school
-    method of multiplication on binary numbers. It is out of place and uses
-    only one additional ancilla for the adder circuits.
+    A very simple implementation of multiplication, which is described in
+   \cite{offermann2010} uses controlled addition circuits (see
+   \cref{fig:ctrlRipple}). Given two numbers as bit strings $a$ and $b$ their
+   product can be found by repeatedly shifting forward by one and adding $b$ to
+   the result controlled on the next bit in $a$.  See \cref{fig:multAdd} for a
+  four bit example. This is essentially the elementary school shift and add
+  method of multiplication on binary numbers. It is out of place and uses only
+  one additional ancilla for the adder circuits.
 
     \begin{figure}[ht]
       \capstart
@@ -178,22 +182,21 @@ for reversible Karatsuba.
         M_n = 4n^2 - 2n -1
       \end{align}
 
-  \subsection{Reversible Karatsuba\label{sec:kara}}
-
-    The following reversible algorithm for Karatsuba improves upon previous
-    work\cite{PF:2006}. An asymptotic improvement is space use (yielding as
-    well an asymptotic improvement in the space-time product), is shown by
-    using pebble games in the analysis. Further some constant improvements are
-    realized by using in place addition to minimize garbage growth at each
-    level and by optimally splitting the input in each recursive step rather
-    then just dividing the bit-string in half; This is helpful when the integer
-    size is not a power of 2.
-
+  \subsection{Reversible Karatsuba\label{sec:kara}}    
     Let $n\geq 1$ and let $x$ and $y$ be $n$-bit integers.  The
     Karatsuba\cite{KO:1963} algorithm is based on the observation that by
     writing $x=x_1 2^{\lceil n/2\rceil}+x_0$ and $y=y_1 2^{\lceil n/2\rceil
     }+y_0$ the product $xy$ can be evaluated as $xy=2^n A + 2^{\rceil n/2
     \rceil} B + C$, where
+
+The following reversible algorithm for Karatsuba improves upon previous
+work\cite{PF:2006,Kepley2015,offermann2010}. An asymptotic improvement is space
+use (yielding as well an asymptotic improvement in the space-time product), is
+shown by using pebble games in the analysis. Further some constant improvements
+are realized by using in place addition to minimize garbage growth at each
+level and by optimally splitting the input in each recursive step rather then
+just dividing the bit-string in half, this is helpful when the integer size is
+not a power of 2.
 
     \begin{align*}
       A &= x_1 y_1, \\
@@ -208,7 +211,7 @@ for reversible Karatsuba.
       \label{fig:kara2}
      \end{figure}
 
-    \subsubsection{Analysis}\todo{Maybe add an MDD for the circuit}
+    \subsubsection{Analysis}%\todo{Maybe add an MDD for the circuit}
 
       Note that the cost for the computation of $A$, $B$, and $C$ are $3$
       multiplications and four additions.  Note further that the additions to
@@ -228,8 +231,8 @@ for reversible Karatsuba.
       $4$ in-place adders of size $n$ and $4$ in place adders of size $n/2$
       (note the subtracters are just reversed adders).  The base case is a
       multiplier for two one-bit numbers which can be done with one Toffoli
-      gate, i.e., $K_1^{g}=1$.  We obtain the following recursion:\todo{Check
-      these computations.}
+      gate, i.e., $K_1^{g}=1$.  We obtain the following recursion:
+      %\todo{Check these computations.}
 
       \begin{align}
         K_n^{g} = 3 K_{n/2}^{g} + 4 \left(A_{n} + A_{n/2}\right); \quad K_1^{g}=1.
@@ -256,19 +259,20 @@ for reversible Karatsuba.
       \end{align}
 
       This bound can be improved by replacing the recursive call to Karatsuba
-      with naive multiplication once a certain cut-off has been reached.
-      Looking at \cref{fig:cutoff} we see a comparison of various cutoff values
-      (the naive method is also plotted for reference).
+      with naive multiplication once a certain cut-off has been reached (i.e. once
+      $n$ goes below some cutoff value).  Looking at \cref{fig:cutoff} we see a
+      comparison of various cutoff values (the naive method is also plotted for
+      reference).
 
       Another way to improve this algorithm is to attempt to choose more
       intelligent splits rather then always splitting the inputs in half at
       each level.  This is important because the bit length of the numbers we
-      are adding together may not be a power of two so dividing the input in
-      two at each level might not be optimal.  In \cref{fig:cutoff} the line
-      plotted as \verb+AKara10+ shows the result of using the optimal splits at
-      each level.  These were found by a simple dynamic program which evaluated
-      the total gate size for every possible split at every level and chose the
-      optimal ones.
+      are adding together may not be a power of two so dividing the input
+      bit-string in half at each level might not be optimal.  In
+      \cref{fig:cutoff} the line plotted as \verb+AKara10+ shows the result of
+      using the optimal splits at each level.  These were found by a simple
+      dynamic program which evaluated the total gate size for every possible
+      split at every level and chose the optimal ones.
 
       As using these methods we find an optimal cutoff value of 11 (see
       \cref{fig:cutoffs}).
@@ -276,7 +280,7 @@ for reversible Karatsuba.
       \begin{figure}[p]
         \capstart
         \includegraphics[width=\textwidth,height=0.4\textheight]{images/avgCutoffs.tikz}
-        \caption{Average circuit size over the interval 50-500 for various cutoff values}
+        \caption{Average circuit size over the interval 50-500 for various cutoff values.}
         \label{fig:cutoffs}
       \end{figure}
       \begin{figure}[p]
@@ -320,7 +324,7 @@ where $N=\log_2 n$.
 We would like to break this tree into approximately equal sized subtrees at
 some level.  Each tree at that level will be computed then uncomputed leaving
 only the top node. To minimize space we will choose the size of these subtrees
-to be approximately equal to the remaining size of the tree above them.  So to
+to be approximately equal to the remaining size of the tree above them. To
 find the height $k$ of such a tree we set:
 
 \[
@@ -377,7 +381,7 @@ This gives an overall depth for computing the $k$ level of:
 This gives a space-depth product in the fully parallel version of $n^{1+\log_2
 3}$ which is the same
 
-\subsection{Generalization to other recursions}
+\subsection{Generalization to other recursions\label{sec:recpeb}}
 
 Assume that we are given a function with input size $n$ which splits a problem
 into $a$ subproblems of size $\nicefrac{n}{b}$ where total work done to
@@ -412,7 +416,7 @@ structure was considered.
         \capstart
         \centering
         \includegraphics[width=0.7\textwidth]{images/kara-mdd}
-        \caption{Structure of a pebble game for implementing the Karatsuba circuit. Note that $K_n$ can be implemented using $n/2+1$ ancilla}
+        \caption{Structure of a pebble game for implementing the Karatsuba circuit. Note that $K_n$ can be implemented using $n/2+1$ ancilla.}
         \label{fig:kara-mdd}
       \end{figure}
 
@@ -420,25 +424,24 @@ structure was considered.
         \capstart
         \includegraphics[width=\textwidth,height=0.4\textheight]{images/cutoff.tikz}
         \caption{Plot of circuit sizes vs input size for various various Karatsuba cutoffs.
-                 The Legend shows the implementation (skara for the simple version and aKara for the adaptive cutoff) as well as a number indicating the cutoff size. }
+                 The Legend shows the implementation (sKara for the simple version and aKara for the adaptive cutoff) as well as a number indicating the cutoff size. }
         \label{fig:cutoff}
       \end{figure}
 
       \begin{figure}[p]
         \capstart
         \includegraphics[width=\textwidth,height=0.4\textheight]{images/karaSize.tikz}
-        \caption{Plot of bits used verses input size for various Karatsuba cutoffs}
+        \caption{Plot of bits used verses input size for various Karatsuba cutoffs.}
         \label{fig:size}
       \end{figure}
       \begin{figure}[p]
         \capstart
         \includegraphics[width=\textwidth,height=0.4\textheight]{images/karaDepth.tikz}
-        \caption{Plot of Toffoli depth verses input size for various Karatsuba cutoffs}
+        \caption{Plot of Toffoli depth verses input size for various Karatsuba cutoffs.}
         \label{fig:depth}
       \end{figure}
 
 \section{Division}
-  \subsection{Binary integer division}
     In \cref{fig:div} is a simple integer division circuit based on the binary
     form of long division as outlined in \cref{algo:intdiv}.
 
@@ -478,20 +481,30 @@ structure was considered.
     $Q(i)$.
 
     This divider uses a total of $n$ comparisons and subtractions of size $n$
-    where $n$ is the bit width of the input.
+    where $n$ is the bit width of the input. A comparison can be implemented by
+    computing the highest order bit when the numbers are subtracted.
 
-\section{Trigonometric functions}
-    \subsection{CORDIC}
+\section{Trigonometric functions with CORDIC}
 
-	The CORDIC\cite{V:1959} algorithm was originally developed to calculate
-	trigonometric functions on simple analog computers. Because of this the
-	algorithms uses only simple operations such as bitshift, addition, and
-	negation. Since these operations are simple to implement as reversible
-	computations (and can in fact be done in-place) it is well suited for
-	adaptation as a reversible algorithm. The basic idea of CORDIC is to
-	apply repeated rotations which converge on a desired value:
+    The CORDIC\cite{V:1959} algorithm was originally developed to calculate
+    trigonometric functions on simple analog computers. Because of this the
+    algorithms uses only simple operations such as bitshift, addition, and
+    negation. Since these operations are simple to implement as reversible
+    computations (and can in fact be done in-place) it is well suited for
+    adaptation as a reversible algorithm. The basic idea of CORDIC is to apply
+    repeated rotations which decrease in size with each iteration while using
+    a comparator to choose the direction of each iteration such that they
+    converge on the desired value (as shown in \cref{fig:cordic-rot}):
 
-        \[ \theta = \alpha_0 + \alpha_1 + \dotsb + \alpha_{n-1} \]
+    \[ \theta = \alpha_0 + \alpha_1 + \dotsb + \alpha_{n-1} \]
+
+    \begin{figure}
+        \capstart
+        \centering
+        \includegraphics[width=.5\textwidth]{images/cordic-rot}
+        \caption{Rotations are used to converge on $\theta$.}
+        \label{fig:cordic-rot}
+    \end{figure}
 
 	The issue is that computing rotations is generally expensive; requiring
 	multiplication and the evaluation of trig functions (the very thing we
@@ -539,27 +552,32 @@ structure was considered.
 
     \subsubsection{Reversible Implementation}
 
-    The CORDIC algorithm can be implemented reversibly.\todo{What is a
-    reversible CORDIC useful for?}
+    The CORDIC algorithm can be implemented reversibly.
+    %\todo{What is a reversible CORDIC useful for?}
 
 	We pre-compute all of our rotation angles
 	($\gamma_0,\gamma_1,\dotsc,\gamma_{n-1}$) as well as the scaling factor
 	$K(n)$. Our input is the angle $\theta$ and our output is ($x$,$y$)
 	where $\tan\theta = y/x$.
 
-        \paragraph{Finding the directions of rotation}
-            The directions of rotation can be determined using the sign bit of $\theta$.
-            At each step we copy out the sign bit of $\theta$ then add the angle $\gamma_i$ if $\theta$ is negative or subtract if it is positive.
-            At the end the copied out set of bits $\sigma$ determine the directions of rotation.
-            $\theta$ will approach zero so the higher order bits could possibly be cleaned up at the end of the step.
-            Figure \ref{fig:CORDICDirections} shows a circuit for calculating $\sigma$.
-            \begin{figure}
-                \capstart
-                \centering
-                \includegraphics[width=\textwidth]{images/CORDICDirections}
-                \caption{Circuit to determine directions of rotation.  The controls determine whether $\gamma$ is added or subtracted.}
-                \label{fig:CORDICDirections}
-            \end{figure}
+	\paragraph{Finding the directions of rotation} The directions of
+	rotation can be determined using the sign bit of $\theta$.  At each step we
+	copy out the sign bit of $\theta$ then add the angle $\gamma_i$ if $\theta$ is
+	negative or subtract if it is positive.  At the end the copied out set of bits
+	$\sigma$ determine the directions of rotation.  $\theta$ will approach zero so
+	the higher order bits could possibly be cleaned up at the end of the step.
+	Figure \ref{fig:CORDICDirections} shows a circuit for calculating $\sigma$.
+
+	\begin{figure} 
+            \capstart 
+            \centering
+	    \includegraphics[width=\textwidth]{images/CORDICDirections} 
+
+	    \caption{Circuit to determine directions of rotation.  The controls
+            determine whether $\gamma$ is added or subtracted.}
+            \label{fig:CORDICDirections} 
+
+        \end{figure}
 
         \paragraph{Performing Rotations}
 
@@ -608,7 +626,7 @@ structure was considered.
 	the number of pebbles required.
 
 	Assuming we pebble the $x$ chain and move the $y$ pebble forward as
-	described above we can see the pebbles along the $x$ as a sort 1D
+	described above we can see the pebbles along the $x$ as a sort of 1D
 	pebble game, we therefore can use the previously discussed strategies.
 	With an incremental strategy we would only need to store
 	$O(n^{\nicefrac{1}{2}})$ $x$ registers. This improves our overall space
@@ -667,10 +685,10 @@ TERM = VAR
 \end{verbatim}
 
 An algorithm to produce a circuit for such an expression is given by:
-\todo{Boolean expression algorithm: Formally write this up}
+%\todo{Boolean expression algorithm: Formally write this up}
 
 
-\subsection{Converting OR to XOR}\todo{Reference revs paper}
+\subsection{Converting OR to XOR}\cite{parent15}%\todo{Reference revs paper}
 In the case of mutually exclusive statements XOR is equivalent to OR.
 That is to say $a \lor b = a \oplus b$ if $a = 1 \implies b = 0$ and $b = 1 \implies a =0$.
 For example $a\land b \lor \neg a \land c = a\land b \oplus \neg a \land c$.
@@ -716,9 +734,10 @@ Now we cover this graph using a minimum number of cliques.
 After finding these cliques each set of mutually exclusive statements can be implemented by evaluating the AND statements and combining all of the values on a single ancilla using XOR for each clique.
 These results can then be combined using OR statements (since OR is associative it does not matter how we group the statements).
 
-This algorithm has been implemented and tested on the BLIF benchmarks. \todo{add reference and explain what BLIF is}
-The results are shown below:
-\todo{chart}
+%This algorithm has been implemented and tested on the BLIF benchmarks. 
+%\todo{add reference and explain what BLIF is}
+%The results are shown below:
+%\todo{chart}
 
 \section{Gray Code Controlled Counter\label{sec:findFirst}}
   Suppose you want to perform a set of functions which return some boolean value and you wish to know the first such function which returns $0$.
@@ -728,11 +747,11 @@ The results are shown below:
   We therefore want to change the state of the counter by looking at just enough information to verify that all previous steps have been performed.
   To do this we must look at a subset whose value is unique to the previous step.
   Note some difficulty is introduced by the reversible nature of the circuit in that we cannot depend on parts of the state that we are updating.
-  To do this we simply follow a binary counting method which flips one bit each step (Grey Code).
+  To do this we simply follow a binary counting method which flips one bit each step (Gray Code).
   Since only one bit is flipped per iteration the context of the unflipped bits is sufficient to verify the previous steps.
   An example of such a chain is shown below where the underlined portions of the state are the ones verified before the next step:
   \[
     000 \to 00\underline{1} \to 0\underline{1}1 \to 0\underline{10} \to \underline{1}10 \to
     \underline{1}1\underline{1} \to \underline{10}1 \to 100
   \]
-  A possible application of such a counter is in an input erasing multiplier.\todo{expand or remove}
+  %A possible application of such a counter is in an input erasing multiplier.\todo{expand or remove}

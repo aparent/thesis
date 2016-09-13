@@ -1,0 +1,23 @@
+\chapter{Discussion and Open Problems}
+
+A new game for Heuristic methods for playing pebble games on an MDD were
+presented and pebble game analysis was applied to some arithmetic circuits of
+interest resulting in an asymptotic space reduction for a class of recursive
+functions (see \ref{sec:recpeb}). It is likely that there exist efficiently
+computable methods with better time and/or space performance. 
+
+Additionally methods for the conversion of other reversible languages to an MDD
+intermediate might give further insight into the types of useful heuristic
+strategies that might be implemented. More work should be done to explore MDD
+games on some special graphs which correspond to common computations.
+
+It might also be interesting to create a sort of graphical reversible
+programming language where the programmer directly interacts with and
+constructs an MDD. Such a language might make it easier to visualize the
+structure imposed by reversibility. 
+
+The MDD structure may also be useful as a compiler intermediate for reversible
+languages since it seems general enough to be language agnostic and many
+optimizations and time-space trade-offs can be done using the information
+provided. This would allow optimizations provided by a good
+$\text{MDD}\mapsto\text{circuit}$ compiler to be shared between languages. 

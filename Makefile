@@ -7,14 +7,16 @@ tex-files = memory.tex arithmetic.tex intro.tex jcc.tex header.tex
 
 .PHONY: uw-ethesis
 
-all: uw-ethesis
+all: thesis.pdf
 
 clean:
 	latexmk -C
 
-uw-ethesis: uw-ethesis.tex uw-ethesis-frontpgs.tex $(tex-files) $(diagrams) data/plot-data
-	latexmk -pdf -pdflatex="pdflatex -shell-escape" uw-ethesis.tex
+thesis.pdf: uw-ethesis.pdf
 	gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dNOPAUSE -dQUIET -dBATCH -sOutputFile=thesis.pdf uw-ethesis.pdf
+
+uw-ethesis.pdf: uw-ethesis.tex uw-ethesis-frontpgs.tex $(tex-files) $(diagrams) data/plot-data
+	latexmk -pdf -pdflatex="pdflatex -shell-escape" uw-ethesis.tex
 
 images/%.svg: jcc-examples/%.j
 	jcc $^ -O -d $@

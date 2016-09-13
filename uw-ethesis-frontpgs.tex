@@ -13,7 +13,7 @@
         \vspace*{1.0cm}
 
         \Huge
-        {\bf DRAFT: The Compilation of Reversible Circuits and a New Optimization Game}
+        {\bf The Compilation of Reversible Circuits and a New Optimization Game}
 
         \vspace*{1.0cm}
 
@@ -75,7 +75,17 @@ I understand that my thesis may be made electronically available to the public.
 
 \begin{center}\textbf{Abstract}\end{center}
 
-A review of reversible circuits for arithmetic and circuit optimization in the context of the implementing a reversible circuit compiler.
+The focus of this thesis is reversible circuit compilation.
+
+We will explore the use of pebble games for circuit analysis. The usefulness of
+this technique is demonstrated by finding a new space bound for the Karatsuba
+algorithm and more generally for any similar algorithm based on recurrence
+relations. A new pebble game based on the reversible pebble game which better
+captures the use of in-place operations is also presented. We also construct
+circuit to compute trigonometric functions based on the CORDIC algorithm and
+analyze it using this game.
+
+%
 
 \cleardoublepage
 %\newpage
@@ -83,19 +93,19 @@ A review of reversible circuits for arithmetic and circuit optimization in the c
 % A C K N O W L E D G E M E N T S
 % -------------------------------
 
-\begin{center}\textbf{Acknowledgements}\end{center}
+%\begin{center}\textbf{Acknowledgements}\end{center}
 
-I would like to thank\dots
-\cleardoublepage
+%I would like to thank\dots
+%\cleardoublepage
 %\newpage
 
 % D E D I C A T I O N
 % -------------------
 
-\begin{center}\textbf{Dedication}\end{center}
+%\begin{center}\textbf{Dedication}\end{center}
 
-This is dedicated to\dots
-\cleardoublepage
+%This is dedicated to\dots
+%\cleardoublepage
 %\newpage
 
 % T A B L E   O F   C O N T E N T S
@@ -108,10 +118,10 @@ This is dedicated to\dots
 
 % L I S T   O F   T A B L E S
 % ---------------------------
-\addcontentsline{toc}{chapter}{List of Tables}
-\listoftables
-\cleardoublepage
-\phantomsection		% allows hyperref to link to the correct page
+%\addcontentsline{toc}{chapter}{List of Tables}
+%\listoftables
+%\cleardoublepage
+%\phantomsection		% allows hyperref to link to the correct page
 %\newpage
 
 % L I S T   O F   F I G U R E S

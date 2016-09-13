@@ -101,6 +101,7 @@
 \usepackage[pdftex,letterpaper=true,pagebackref=false]{hyperref} % with basic options
 \usepackage[all]{hypcap}
 \usepackage{cleveref}
+\usepackage[font=small,labelfont=bf]{caption}
 % N.B. HYPERREF MUST BE THE LAST PACKAGE LOADED; ADD ADDITIONAL PKGS ABOVE
 		% N.B. pagebackref=true provides links back from the References to the body text. This can cause trouble for printing.
 
@@ -206,6 +207,7 @@
 \include{intro}
 \include{memory}
 \include{arithmetic}
+\include{conclusion}
 
 %----------------------------------------------------------------------
 % END MATERIAL
@@ -237,7 +239,7 @@
 \nocite{}
 
 \appendix
+%\include{revs}
 \include{jcc}
-\todo{add revs appendix}
 
 \end{document}

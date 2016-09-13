@@ -30,7 +30,7 @@ Subtraction can be done simply by reversing the addition circuit.
 Multiplication is done with a simple shift and add circuit.
 An adder adding the variables $a$ and $b$ consists of a CDKM\cite{CDKM:2004} adder controlled on each bit of a.
 Each adder adds $b$ to some ancilla shifted left by the position of the control in a.
-Each adder is smaller then the last as the multiplication is preformed $\mod 2^n$.
+Each adder is smaller then the last as the multiplication is performed $\mod 2^n$.
 Below is an example of the compiler output for a multiplication:
 
 \verbatiminput{jcc-examples/mult.j}
@@ -54,8 +54,8 @@ In the circuit model we need to implement all loop operations up to some max
 bound. This is especially important in the Quantum model as some states in a
 superposition may require more loop iterations then others to evaluate.
 
-So to implement a loop we want to repeatedly preform some computation until a
-condition is met. We then want to stop preforming that computation for the
+So to implement a loop we want to repeatedly perform some computation until a
+condition is met. We then want to stop performing that computation for the
 remainder of the loop.
 
 Swapping out of the loop using as done in conditional statements will not work
